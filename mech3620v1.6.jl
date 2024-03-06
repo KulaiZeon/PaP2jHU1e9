@@ -37,8 +37,8 @@ md"""
 
 # ╔═╡ 5620f187-012b-4ffe-ab53-04309440f10e
 md"
-The requirement you provided for our design
-| **Parameters** | **Requirement** |
+| **Tentative~parameters~of~Proposed~Aircraft** | **Numbers** |
+:----|----|
 
 |Number of Pax| $8~occupants(90~kg~pax + 10~kg luggage each)|
 
@@ -121,7 +121,10 @@ W0i = maximum_takeoff_weight( #Weight(N) Initial MOTW
 end
 
 # ╔═╡ cf5c0521-cf43-42ab-8ac2-728559216e7b
-md" ### Segment Fuel Fraction"
+md" ### Segment Fuel Fraction
+
+
+"
 
 # ╔═╡ 16dd553a-3e71-41df-b5e8-c6cab9a63f17
 html"""
@@ -158,6 +161,21 @@ We consider a mission consisting of 12 segments in the following order:
 11. Descent
 12. Landing
 """
+
+# ╔═╡ a92053bd-3057-4eac-9913-b053e35e1f18
+md"
+### Cruise Weight Fraction
+$$WF_{\mathrm{cruise}} = \exp\left(-\frac{R \times SFC}{V \times (L/D)_\text{cruise}}\right)$$
+The cruise lift-to-drag ratio can be approximated as $(L/D)_\text{cruise} = 0.866(L/D)_\max$.
+"
+
+# ╔═╡ 836289a7-a6ae-48e9-90b2-eb30c3d865f0
+md"
+### Loiter Weight Fraction
+
+$$WF_\text{Loiter} = \exp\left(-\frac{E \times SFC}{(L/D)_\max}\right)$$
+The SFC in this segment can be approximated as: $SFC_\text{Loiter} \approx 2 \times SFC$
+"
 
 # ╔═╡ eec3569b-d858-4549-a4a9-9176e8a62989
 begin
@@ -220,6 +238,9 @@ FFs = [WarmupFF,TaxiFF,TakeoffFF,ClimbFF,crusieFF1,ClimbFF,crusieFF2,loiterFF1,c
 # ╔═╡ 030faac0-b5af-424a-b422-fdf7e3fa9567
 WfWTO = fuel_weight_fraction(FFs, 1.06)
 
+# ╔═╡ b979ddb9-ca6b-4ee2-942c-661eec458189
+md"### Plot-Fuel Fraction vs Mission Segment Number"
+
 # ╔═╡ 63aa90d8-ef35-41b5-9f39-1fdfe5d8eb9a
 plot( # You can ignore this for now. Alternatively, use Live Docs to understand the functions used.
 	eachindex(FFs), # Mission segment numbers
@@ -258,9 +279,12 @@ begin
 	plty = O*ones(size(pltx))+P*pltx
 end;
 
+# ╔═╡ f8656f65-afc2-4700-9976-188213d1428b
+md"### Plot of Maximum Takeoff Weight vs Empty Weight"
+
 # ╔═╡ cee7c39f-3c6d-467d-839e-0379b64251d5
 begin
-	scatter(log10.(We_array), log10.(W0_array), legend=false, xlabel="Empty Weght(log10)", ylabel="MOTW(log10)")
+	scatter(log10.(We_array), log10.(W0_array), legend=false, xlabel="Empty Weight(log10)", ylabel="MOTW(log10)")
 	plot!(pltx, plty)
 end
 
@@ -321,8 +345,44 @@ WTOs, errors = compute_maximum_takeoff_weight(
 					tol = 1e-12
 				   )
 
+# ╔═╡ 6e2b5ba0-e4e6-4af2-ae96-48f2f86e6f6b
+md" ### Maximum takeoff weight"
+
 # ╔═╡ 29c77775-f591-4cbc-8373-7eb08976168a
 MTOW_kg = WTOs[end] / g ### The WfWTO might need to lower
+
+# ╔═╡ 903c7f27-5924-477a-a363-13735d743b18
+md" ### Matching chart graph code"
+
+# ╔═╡ 30507f51-d7b4-42db-acfd-b04a9ec09715
+begin
+	plot(
+		xlabel = "(W/S), N/m²", 
+		ylabel = "(T/W)", 
+		title = "Matching Chart",
+		legend = :bottomright
+	)
+	# Lines
+	plot!(stalls, TbWs, label = "Stall")
+	plot!(wing_loadings, TbW_takeoff, label = "Takeoff")
+	plot!(wbs_landing, TbWs, label = "Landing")
+	plot!(wing_loadings, takeoff_climbs, label = "Takeoff Climb")
+	plot!(wing_loadings, trans_climb, label = "Transition Climb OEI")
+	plot!(wing_loadings, second_climb, label = "Second Climb OEI")
+	plot!(wing_loadings, enroute_climb, label = "Enroute Climb OEI")
+	plot!(wing_loadings, baulked_AEO_climb, label = "Balked Landing Climb AEO")
+	plot!(wing_loadings, baulked_OEI_climb, label = "Balked Landing Climb OEI")
+	plot!(wing_loadings, tbw_cruise, label = "Cruise")
+
+	# Annotation
+	annotate!(4000, 0.35, "Feasible")
+
+	# Points
+	scatter!([6480], [TbW_takeoff_climb], label = "Constrained Optimum 1 (Min Thrust)") # Plot min thrust point evaluated graphically
+	scatter!([WbS_stall], [0.271], label = "Constrained Optimum 2 (Max Wing Loading)")
+	 # Plot max wing loading point evaluated graphically
+end
+
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1921,7 +1981,7 @@ version = "1.4.1+1"
 # ╠═848078d6-01dc-4490-ada6-80d59b09e0ed
 # ╠═439ef922-0248-401d-928d-dd2545f0b972
 # ╠═5620f187-012b-4ffe-ab53-04309440f10e
-# ╠═873c5b1c-1f29-4640-a870-7557703b759a
+# ╟─873c5b1c-1f29-4640-a870-7557703b759a
 # ╠═69ae798d-fe27-4f30-8419-bf864258353c
 # ╠═046a4b63-159d-4b36-92d5-4c8f207f20ac
 # ╠═7370adf7-69af-4ade-b63b-d6eff287834a
@@ -1933,6 +1993,8 @@ version = "1.4.1+1"
 # ╠═16dd553a-3e71-41df-b5e8-c6cab9a63f17
 # ╟─8ffec899-a8f5-4255-901e-ae60bf52ab25
 # ╠═e88b5067-b4e1-4dea-9c70-7e2d5f8f05e8
+# ╠═a92053bd-3057-4eac-9913-b053e35e1f18
+# ╠═836289a7-a6ae-48e9-90b2-eb30c3d865f0
 # ╠═eec3569b-d858-4549-a4a9-9176e8a62989
 # ╠═8672a6f2-415c-4605-b7c5-7420c47da4a5
 # ╠═a26c2944-b6f0-41b2-8375-c9df91370234
@@ -1941,15 +2003,20 @@ version = "1.4.1+1"
 # ╠═523094f1-8534-4e7a-8f65-034291332647
 # ╠═b00fb477-0a26-44ed-a8f9-c8504a454845
 # ╠═030faac0-b5af-424a-b422-fdf7e3fa9567
+# ╠═b979ddb9-ca6b-4ee2-942c-661eec458189
 # ╠═63aa90d8-ef35-41b5-9f39-1fdfe5d8eb9a
 # ╟─4b4d0281-5ef2-46c0-b711-fdab27e95375
-# ╟─26f8c221-f9be-4a80-895c-2c04fe74e12b
+# ╠═26f8c221-f9be-4a80-895c-2c04fe74e12b
 # ╠═3bb0b409-9b52-4f30-9217-734e54989e8d
 # ╠═b6c97d72-9bc5-4065-8233-9efa6ac8d5ce
+# ╠═f8656f65-afc2-4700-9976-188213d1428b
 # ╠═cee7c39f-3c6d-467d-839e-0379b64251d5
 # ╠═06a3b160-88ff-4e6e-a633-36f7bae15a72
 # ╠═960c6d25-0a82-4368-9d34-54cb8624c6d0
 # ╠═17e18aa0-29fe-46e9-9a6f-85188a818695
-# ╠═29c77775-f591-4cbc-8373-7eb08976168a
+# ╟─6e2b5ba0-e4e6-4af2-ae96-48f2f86e6f6b
+# ╟─29c77775-f591-4cbc-8373-7eb08976168a
+# ╠═903c7f27-5924-477a-a363-13735d743b18
+# ╠═30507f51-d7b4-42db-acfd-b04a9ec09715
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
