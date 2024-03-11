@@ -48,7 +48,7 @@ md"
 # ╔═╡ 873c5b1c-1f29-4640-a870-7557703b759a
 md"
 
-After our team did some research on the existing aircraft, we found that there are some aircrafts that nearly suit your requirements
+Our team researched similar spec'd aircraft on the current market and made references to the following aircrafts:
 
 |**Parameters**| **Aircraft 1** |**Aircraft 2** | **Aircraft 3** |
 :--|----|----|----|
@@ -68,7 +68,7 @@ After our team did some research on the existing aircraft, we found that there a
 # ╔═╡ 69ae798d-fe27-4f30-8419-bf864258353c
 md"
 
-After analysing the performance and the specification of theexisted aircraft in the market,the tentative specification of our private jet(R-jet) is presented below:
+After analysing the performance and the specification of the existing aircraft available on the market,combining with the request from our customer, the tentative specification of our private jet(R-jet) is presented below:
 
 | **Tentative~parameters~of~Proposed~Aircraft** | **Numbers** |
 :----|----|
@@ -80,9 +80,6 @@ After analysing the performance and the specification of theexisted aircraft in 
 | Engine | $Honeywell~TFE731~3A~2B$ |
 | Thrust | $3700~lbf$ |
 "
-
-# ╔═╡ 046a4b63-159d-4b36-92d5-4c8f207f20ac
-
 
 # ╔═╡ 7370adf7-69af-4ade-b63b-d6eff287834a
 md"
@@ -354,6 +351,330 @@ MTOW_kg = WTOs[end] / g ### The WfWTO might need to lower
 # ╔═╡ 903c7f27-5924-477a-a363-13735d743b18
 md" ### Matching chart graph code"
 
+# ╔═╡ 49ebf579-ff75-4b83-86f1-aa46ce738597
+md"""
+# Preliminary Sizing
+"""
+
+# ╔═╡ 2addc67b-df44-4f9c-a02b-ab48444db914
+md"""
+We calculate the specification of our aircraft to be as follows:
+"""
+
+# ╔═╡ ab5bd95d-b853-4f8b-a4ed-9529cf461761
+md"""
+	1. Aspect Ratio (We make reference to the CJ3 G2 aircraft):
+
+```math
+Aspect ~ Ratio ~ (AR) = \frac{b^2}{s}
+```
+	"""
+
+# ╔═╡ 916578b7-844a-48ea-919f-5ac1063bfaf7
+md"""
+	Substituting the specification of CJ3 G2 into the equation:
+
+```math
+AR_(CJ3) = \frac{16.26^2}{27.32}
+```
+	"""
+
+# ╔═╡ 000dd8c3-af7f-4a02-b378-2dd1c32deadc
+begin
+	CJ3_WingSpan = 16.26 #In meters
+	CJ3_WingArea = 27.32 #In meters-squared
+	CJ3_AR = CJ3_WingSpan^2 / CJ3_WingArea 
+	println("The target aspect ratio is: ",CJ3_AR)
+end
+
+# ╔═╡ f07aba16-01db-4d2d-81a6-0ce39e6bc598
+md"""
+	2. Wing Area (From AR to Wing Area):
+
+```math
+Wing~Area~(RJet) = \frac{b^2}{AR}
+```
+	"""
+
+# ╔═╡ 10de6318-abec-49cf-a57a-2fc016ce7829
+md"""
+	Substituting the specification of RJet into the equation:
+
+```math
+AR_(RJet) = \frac{15.5^2}{9.68}
+```
+	"""
+
+# ╔═╡ e2fe770b-e4a2-42ef-bc45-24f4d48b6332
+begin
+	Rjet_AR = 9.68 
+	Rjet_WingSpan = 15.5 #In meters
+	Rjet_WingArea = Rjet_WingSpan^2 / Rjet_AR 
+	println("The target wing area is: ",Rjet_WingArea)
+end
+
+# ╔═╡ 6ffb8005-55f0-4378-90aa-08fd63c94ef4
+md"""
+	3. Wing Loading:
+
+```math
+Wing~Loading~(RJet) = \frac{MTOW}{Wing~Area}
+```
+	"""
+
+# ╔═╡ 43fbfc6a-ecaa-4361-b014-cadeab4bc5da
+md"""
+	Substituting the specification of RJet into the equation:
+
+```math
+Wing~Loading~(RJet) = \frac{8,000}{24.82}
+```
+	"""
+
+# ╔═╡ 0c05bd61-968b-4dc6-86ce-9688b5b30cef
+begin
+	Rjet_MTOW = 8000 
+	Rjet_WingLoading = Rjet_MTOW / Rjet_WingArea 
+	println("The target wing loading is: ",Rjet_WingLoading)
+end
+
+# ╔═╡ 01f5a68d-81af-49c5-8528-080ad028abe9
+md"""
+
+
+Based on our mission requirement, and making reference to the reference aircraft of Cessna CJ3 Gen 2, we deduce the appropriate specification of our aircraft to be as follows:
+
+| **Parameter** | **Value (Metric)** | **Value (Imperial)** |
+:-------------|-----------------------|-----------------------
+| Aspect Ratio ($AR$) | $9.68$ | $9.68$ |
+| Span ($b$) | $15.5~m$ | $50.82~ft$ |
+| Wing Area ($S$) | $24.82~m^2$ | $267.1~ft^2$ |
+| MTOW ($W_0$) | $8,000~kg$ | $17,637~lbs$ |
+| Takeoff Wing Loading $(W/S)_\text{takeoff}$ | $322.33~kg/m^2$ | $66.01~lbs/ft^2$ |
+| Cruise Mach Number $(M_\text{cruise})$ | $0.85$ | $0.85$ |
+| Cruise Altitude ($h_\text{cruise}$) | $13106~m$ | $43,000~ft$ |
+| Ceiling Altitude ($h_\text{ceiling}$) | $13716~m$ | $45,000~ft$ | 
+---
+
+"""
+
+# ╔═╡ 673b3a13-557d-4291-a106-50dd19596999
+# ╠═╡ disabled = true
+#=╠═╡
+begin 
+	using Plots
+	# import PlotlyJS     # For enabling interactivity with the plots
+end
+  ╠═╡ =#
+
+# ╔═╡ e001fec6-265f-4f5d-ad14-7a69b5fd26c8
+gr( # Change to plotlyjs() for interactivity
+	grid = true, 	   # Disable the grid for a e s t h e t i c
+	size = (800, 520), # Adjust the dimensions to suit your monitor
+	dpi = 300     	   # Higher DPI = higher density
+)
+
+# ╔═╡ f9312cdd-cdb3-4e2a-b876-95734727a16c
+md"## Drag Polar"
+
+# ╔═╡ a350ce72-94c2-4bc8-8383-cad4de6c3b74
+md"""
+### Induced Drag Coefficient
+
+```math
+k = \frac{1}{\pi e AR}
+```
+"""
+
+# ╔═╡ 5628e1d5-4c0f-4252-93cd-a33210b1977c
+induced_drag_coefficient(e, AR) = 1 / (pi * e * AR)
+
+# ╔═╡ d180eebc-ad70-47f7-b2a6-8dce912c63c0
+begin
+	begin 
+		e_1  = 0.75
+		AR_1 = 9.8
+		k = induced_drag_coefficient(e_1, AR_1)
+	end
+	
+	println("The induced drag coefficient (k) is: ",k)
+end
+
+# ╔═╡ b572d05c-98b2-4653-a012-60310d3700c3
+md"""
+# CODES IN THIS SECTION ARE NOT CHANGED, reasoning: Airfoil not yet selected.
+"""
+
+# ╔═╡ 87c771d5-fde7-4863-a43d-a33fb5a05d2f
+md"""
+### Parabolic Drag Polar
+
+```math
+C_D = C_{D_\min} + k\left(C_L - C_{L_{\text{min drag}}}\right)^2, \quad k = \frac{1}{\pi e AR}
+```
+"""
+
+# ╔═╡ 63dcc3ab-2fe8-4de7-98bd-bcf9f15a71bb
+drag_polar(CD0, k, CL, CL0 = 0.) = CD0 + k * (CL - CL0)^2
+
+# ╔═╡ 3f15b08b-964e-48ce-ba8e-62315801405b
+md"Let's define a range of lift coefficients over which we would like to see the variation of the drag polar."
+
+# ╔═╡ 8a008a5d-2463-4c19-8c1f-0955cb204b7b
+cls = -1.5:0.05:1.5
+
+# ╔═╡ 11ede02c-9da3-4728-9457-db2c2126f850
+md"Here we consider an uncambered airfoil, hence $C_{L_\text{min drag}} = C_{L_{\alpha = 0}} = 0$ and $C_{D_\min} = C_{D_0}$"
+
+# ╔═╡ 0b7fc8d2-3939-4d20-8ce1-542a2fc3bc02
+begin
+	CD_min = 0.01612
+	CL_min_drag = 0.0
+	cds = drag_polar.(CD_min, k, cls, CL_min_drag)
+end
+
+# ╔═╡ 130fff97-61e9-4192-9fc7-011cdc9d4c73
+begin 
+	CD0 = CD_min
+	CL0 = CL_min_drag
+end
+
+# ╔═╡ 053e352f-5eaf-42d2-b9cb-f6749e36ce8f
+begin
+	CD_min_2 = 0.01
+	CL_min_drag_2 = 0.2
+	cds_2 = drag_polar.(CD_min_2, k, cls, CL_min_drag_2)
+end;
+
+# ╔═╡ 5c7ea184-20cf-419f-93f8-6250d9a419e5
+begin
+	plot(cds, cls, 
+		 label = "CDₘᵢₙ = $CD_min, CL (min drag) = $CL_min_drag",
+		 xlabel = "CD", ylabel = "CL", title = "Drag Polar")
+	plot!(cds_2, cls, 
+		  label = "CDₘᵢₙ = $CD_min_2, CL (min drag) = $CL_min_drag_2")
+end
+
+# ╔═╡ 9e7308b3-7d80-4189-a21a-0667f7b828e5
+md"### Stall Speed
+
+Dynamic pressure:
+
+```math
+q = \frac{1}{2} \rho V^2
+```
+
+Stall speed:
+
+```math
+\left(\frac{W}{S}\right)_\text{stall} = \frac{1}{2}\rho V_\text{stall}^2 C_{L_\max} 
+```
+
+"
+
+# ╔═╡ d82744d2-1481-4ffa-8417-44ad6eb6be64
+dynamic_pressure(rho, V) = 1/2 * rho * V^2
+
+# ╔═╡ bb4a10bc-40c2-4efd-904e-72ff4749ddab
+wing_loading_stall_speed(V_stall, CL_max, ρ = 1.225) = dynamic_pressure(ρ, V_stall) * CL_max
+
+# ╔═╡ f1c3d892-7ee5-466b-972c-9acb7da9e531
+begin
+	V_stall = 0.514 * 150 # 150 knots to m/s
+	CL_max = 2.0 		  # Maximum lift coefficient with no flaps
+end;
+
+# ╔═╡ feb7f610-5135-447f-bc37-f83e7e8a73e6
+md"Density ratio to sea level: $\sigma = \rho/\rho_{SL}$"
+
+# ╔═╡ b3019f35-0140-4338-8567-94713b3d3bca
+σ = 0.95
+
+# ╔═╡ f7b55236-22df-497e-9e91-f0fdd0297233
+WbS_stall = wing_loading_stall_speed(V_stall, CL_max, σ * 1.225)
+
+# ╔═╡ 43e5a697-e91b-4b30-8f95-9aa9dfcbeda1
+md"We need to plot a vertical line, so we define an array with the same elements repeated using the `fill()` function."
+
+# ╔═╡ d2ed7ae7-2831-450e-8796-11bc8979c7a0
+n = 15
+
+# ╔═╡ 6d8672b3-52c9-4861-a750-9e9d80646116
+stalls = fill(WbS_stall, n);
+
+# ╔═╡ c8ff8fe0-2124-483e-b689-446bedd2afbf
+TbWs = range(0, 0.5, length = n);
+
+# ╔═╡ 4f86c8b6-9fcf-42e9-9232-36eca90b6489
+begin 
+	plot(xlabel = "W/S, N/m²", ylabel = "T/W", title = "Matching Chart", xlim = (6600, 7200))
+	plot!(stalls, TbWs, label = "Stall")
+	annotate!(6800, 0.2, "Feasible")
+	annotate!(7050, 0.2, "Infeasible")
+end
+
+# ╔═╡ 06398c2e-f193-4257-ad3f-d7f51c9c350b
+md"""### Takeoff
+Using Raymer's chart for the takeoff condition:
+
+```math
+\frac{(W_0/S)}{\sigma C_{L_{TO}}(T_0/W_0)} \leq TOP = 280
+```
+
+"""
+
+# ╔═╡ ae92fd2f-cf70-477f-9da9-861ae7ef6bad
+takeoff_condition(WbS, σ, CL_takeoff, TOP) = (0.0929/4.448) * WbS / (TOP * σ * CL_takeoff)
+
+# ╔═╡ f249f1a0-f11c-446b-b91e-a63a55df45ef
+begin
+	CL_takeoff = 2.0
+	TOP = 280
+end
+
+# ╔═╡ 4bb61ea6-1b71-4d94-bdd2-58b8c016f171
+wing_loadings = 1000:10000;
+
+# ╔═╡ d415634d-1ea9-435a-8de5-4b7a2350cd17
+TbW_takeoff = takeoff_condition.(wing_loadings, σ, CL_takeoff, TOP)
+
+# ╔═╡ d6f94de5-1457-426f-875a-35f8031bfafc
+begin
+	plot(ylabel = "(T/W)", xlabel = "(W/S), N/m²", title = "Matching Chart")
+	plot!(stalls, TbWs, label = "Stall")
+	plot!(wing_loadings, TbW_takeoff, label = "Takeoff")
+	annotate!(4000, 0.3, "Feasible")
+	annotate!(5000, 0.05, "Infeasible")
+	annotate!(9000, 0.2, "Infeasible")
+end
+
+# ╔═╡ 8c14d493-f5ef-4f82-9970-8369acf181a7
+md"""### Landing
+
+```math
+\frac{W_0}{S} \leq \sigma \left(\frac{W_0}{W_L}\right)\left[\frac{{\color{orange} g} C_{L_\max, L}}{5}\left(s_L - s_a\right)\right]
+```
+
+The $\color{orange} g$ is included to convert the weight's units into Newtons.
+"""
+
+# ╔═╡ 4ad77bb4-ea2c-4f2d-86a7-badb5b9fac9c
+landing_condition(σ, CL_max, s_FL, s_a, r = 0.6, g = 9.81) = σ * g * CL_max / 5 * (r * s_FL - s_a)
+
+# ╔═╡ a8b1c93c-30f6-4587-a5e3-6a5d73aee85d
+begin
+	CL_landing = 2.2 # Maximum lift coefficient at landing
+	s_L = 2800 		 # Runway length
+	s_a = 305 		 # Approach distance
+	r = 0.6 		 # FAR-25 condition
+end
+
+# ╔═╡ bee5fe62-691b-4a84-9aae-a4c90260af96
+landing_sls = 1/WF_landing * landing_condition(σ, CL_landing, s_L, s_a, r)
+
+# ╔═╡ 21cf6e63-16e7-4d8c-8f0f-6db068b600ed
+wbs_landing = fill(landing_sls, n);
+
 # ╔═╡ 30507f51-d7b4-42db-acfd-b04a9ec09715
 begin
 	plot(
@@ -384,6 +705,18 @@ begin
 end
 
 
+# ╔═╡ ef4c561e-89c4-42e2-a169-f30a5bbe0871
+begin
+	plot(ylabel = "(T/W)", xlabel = "(W/S), N/m²", title = "Matching Chart")
+	plot!(stalls, TbWs, label = "Stall")
+	plot!(wing_loadings, TbW_takeoff, label = "Takeoff")
+	plot!(wbs_landing, TbWs, label = "Landing")
+	annotate!(4000, 0.3, "Feasible")
+end
+
+# ╔═╡ b4323785-5a16-41ed-954b-effbec5002b9
+
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -394,13 +727,6 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-
-[compat]
-AeroFuse = "~0.4.10"
-CalculusWithJulia = "~0.1.4"
-DataFrames = "~1.6.1"
-Plots = "~1.39.0"
-PlutoUI = "~0.7.54"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -409,7 +735,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.9.3"
 manifest_format = "2.0"
-project_hash = "d2e777bfffaa0afcb188d022e71c8f9160bed135"
+project_hash = "bc90aea6404ad45f343e688683a422edefefecf5"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -509,9 +835,9 @@ version = "1.16.1+1"
 
 [[deps.CalculusWithJulia]]
 deps = ["Base64", "Contour", "ForwardDiff", "HCubature", "IntervalSets", "JSON", "LinearAlgebra", "PlotUtils", "Random", "RecipesBase", "Reexport", "Requires", "Roots", "SpecialFunctions", "SplitApplyCombine", "Test"]
-git-tree-sha1 = "df0608635021120c3d2e19a70edbb6506549fe14"
+git-tree-sha1 = "f8f38600024939e5921800fd250cc3cdb93bec09"
 uuid = "a2e0e22d-7d4c-5312-9169-8b992201a882"
-version = "0.1.4"
+version = "0.1.3"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra"]
@@ -1335,9 +1661,9 @@ version = "6.5.3+1"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
-git-tree-sha1 = "9b23c31e76e333e6fb4c1595ae6afa74966a729e"
+git-tree-sha1 = "9ebcd48c498668c7fa0e97a9cae873fbee7bfee1"
 uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
-version = "2.9.4"
+version = "2.9.1"
 
 [[deps.Quaternions]]
 deps = ["LinearAlgebra", "Random", "RealDot"]
@@ -1981,9 +2307,8 @@ version = "1.4.1+1"
 # ╠═848078d6-01dc-4490-ada6-80d59b09e0ed
 # ╠═439ef922-0248-401d-928d-dd2545f0b972
 # ╠═5620f187-012b-4ffe-ab53-04309440f10e
-# ╟─873c5b1c-1f29-4640-a870-7557703b759a
+# ╠═873c5b1c-1f29-4640-a870-7557703b759a
 # ╠═69ae798d-fe27-4f30-8419-bf864258353c
-# ╠═046a4b63-159d-4b36-92d5-4c8f207f20ac
 # ╠═7370adf7-69af-4ade-b63b-d6eff287834a
 # ╠═4ae5727a-0002-4ec8-9a0b-00035b73ac7f
 # ╠═4925458c-1ec5-4dbb-9ed1-321214396d8f
@@ -2018,5 +2343,58 @@ version = "1.4.1+1"
 # ╟─29c77775-f591-4cbc-8373-7eb08976168a
 # ╠═903c7f27-5924-477a-a363-13735d743b18
 # ╠═30507f51-d7b4-42db-acfd-b04a9ec09715
+# ╟─49ebf579-ff75-4b83-86f1-aa46ce738597
+# ╟─2addc67b-df44-4f9c-a02b-ab48444db914
+# ╟─ab5bd95d-b853-4f8b-a4ed-9529cf461761
+# ╟─916578b7-844a-48ea-919f-5ac1063bfaf7
+# ╟─000dd8c3-af7f-4a02-b378-2dd1c32deadc
+# ╟─f07aba16-01db-4d2d-81a6-0ce39e6bc598
+# ╟─10de6318-abec-49cf-a57a-2fc016ce7829
+# ╟─e2fe770b-e4a2-42ef-bc45-24f4d48b6332
+# ╟─6ffb8005-55f0-4378-90aa-08fd63c94ef4
+# ╟─43fbfc6a-ecaa-4361-b014-cadeab4bc5da
+# ╟─0c05bd61-968b-4dc6-86ce-9688b5b30cef
+# ╠═01f5a68d-81af-49c5-8528-080ad028abe9
+# ╠═673b3a13-557d-4291-a106-50dd19596999
+# ╠═e001fec6-265f-4f5d-ad14-7a69b5fd26c8
+# ╠═f9312cdd-cdb3-4e2a-b876-95734727a16c
+# ╠═a350ce72-94c2-4bc8-8383-cad4de6c3b74
+# ╠═5628e1d5-4c0f-4252-93cd-a33210b1977c
+# ╟─d180eebc-ad70-47f7-b2a6-8dce912c63c0
+# ╠═b572d05c-98b2-4653-a012-60310d3700c3
+# ╠═87c771d5-fde7-4863-a43d-a33fb5a05d2f
+# ╠═63dcc3ab-2fe8-4de7-98bd-bcf9f15a71bb
+# ╟─3f15b08b-964e-48ce-ba8e-62315801405b
+# ╟─8a008a5d-2463-4c19-8c1f-0955cb204b7b
+# ╟─11ede02c-9da3-4728-9457-db2c2126f850
+# ╠═0b7fc8d2-3939-4d20-8ce1-542a2fc3bc02
+# ╠═130fff97-61e9-4192-9fc7-011cdc9d4c73
+# ╠═053e352f-5eaf-42d2-b9cb-f6749e36ce8f
+# ╠═5c7ea184-20cf-419f-93f8-6250d9a419e5
+# ╠═9e7308b3-7d80-4189-a21a-0667f7b828e5
+# ╠═d82744d2-1481-4ffa-8417-44ad6eb6be64
+# ╠═bb4a10bc-40c2-4efd-904e-72ff4749ddab
+# ╠═f1c3d892-7ee5-466b-972c-9acb7da9e531
+# ╠═feb7f610-5135-447f-bc37-f83e7e8a73e6
+# ╠═b3019f35-0140-4338-8567-94713b3d3bca
+# ╠═f7b55236-22df-497e-9e91-f0fdd0297233
+# ╠═43e5a697-e91b-4b30-8f95-9aa9dfcbeda1
+# ╠═d2ed7ae7-2831-450e-8796-11bc8979c7a0
+# ╠═6d8672b3-52c9-4861-a750-9e9d80646116
+# ╠═c8ff8fe0-2124-483e-b689-446bedd2afbf
+# ╠═4f86c8b6-9fcf-42e9-9232-36eca90b6489
+# ╠═06398c2e-f193-4257-ad3f-d7f51c9c350b
+# ╠═ae92fd2f-cf70-477f-9da9-861ae7ef6bad
+# ╠═f249f1a0-f11c-446b-b91e-a63a55df45ef
+# ╠═4bb61ea6-1b71-4d94-bdd2-58b8c016f171
+# ╠═d415634d-1ea9-435a-8de5-4b7a2350cd17
+# ╠═d6f94de5-1457-426f-875a-35f8031bfafc
+# ╠═8c14d493-f5ef-4f82-9970-8369acf181a7
+# ╠═4ad77bb4-ea2c-4f2d-86a7-badb5b9fac9c
+# ╠═a8b1c93c-30f6-4587-a5e3-6a5d73aee85d
+# ╠═bee5fe62-691b-4a84-9aae-a4c90260af96
+# ╠═21cf6e63-16e7-4d8c-8f0f-6db068b600ed
+# ╠═ef4c561e-89c4-42e2-a169-f30a5bbe0871
+# ╠═b4323785-5a16-41ed-954b-effbec5002b9
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
