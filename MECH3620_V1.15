@@ -521,7 +521,7 @@ induced_drag_coefficient(e, AR) = 1 / (pi * e * AR)
 begin
 	begin 
 		e_1  = 0.75
-		AR_1 = 9.8
+		AR_1 = 9.677
 		k = induced_drag_coefficient(e_1, AR_1)
 	end
 	
@@ -565,15 +565,15 @@ plt_vlm
 
 # ╔═╡ e1f6717b-5006-4539-9935-dca8358c03a1
 md"""
-### Wing Design (NACA4412 wing) (NACA0012 stablizer)
+### Wing Design (NASA SC(2)-0414 and (NASA SC(2)-0410))
 """
 
 # ╔═╡ c09c587f-aba5-472e-a476-33e16ed94c9c
 begin
-	# AIRFOIL PROFILES
-	foil_w_r = read_foil(download("http://airfoiltools.com/airfoil/seligdatfile?airfoil=b737a-il")) # Root
-	foil_w_m = read_foil(download("http://airfoiltools.com/airfoil/seligdatfile?airfoil=b737b-il")) # Midspan
-	foil_w_t = read_foil(download("http://airfoiltools.com/airfoil/seligdatfile?airfoil=b737c-il")) # Tip
+	# AIRFOIL PROFILES (NASA SC(2)-0414)
+	foil_w_r = read_foil(download("http://airfoiltools.com/airfoil/seligdatfile?airfoil=sc20414-il")) # Root 
+	foil_w_m = read_foil(download("http://airfoiltools.com/airfoil/seligdatfile?airfoil=sc20414-il")) # Midspan
+	foil_w_t = read_foil(download("http://airfoiltools.com/airfoil/seligdatfile?airfoil=sc20410-il")) # Tip
 end
 
 # ╔═╡ 5b685898-dbba-439a-b07f-f703491ad986
@@ -625,7 +625,7 @@ end
 
 # ╔═╡ 9205acb8-4951-4b6f-b167-a1b4db38c620
 md"""
-### XFOIL analysis using the NACA 4412 Airfoil.
+### XFOIL analysis using the NASA SC(2)-0414 and NASA SC(2)-0410.
 
 """
 
@@ -661,7 +661,7 @@ md"Based on the properties of the NACA 4412 airfoil, we obtain $C_{L_\text{min d
 
 # ╔═╡ 0b7fc8d2-3939-4d20-8ce1-542a2fc3bc02
 begin #Similarly, the values are roughly estimated from charts, and should be changed if the airfoil changes.
-	CD_min = 0.01
+	CD_min = 0.02
 	CL_min_drag = 0.5
 	cds = drag_polar.(CD_min, k, cls, CL_min_drag)
 end
@@ -714,11 +714,6 @@ begin
 	plot!(cds_2, cls, 
 		  label = "CDₘᵢₙ = $CD_min_2, CL (min drag) = $CL_min_drag_2")
 end
-
-# ╔═╡ b572d05c-98b2-4653-a012-60310d3700c3
-md"""
-# CODES IN THIS SECTION ARE NOT CHANGED, reasoning: Codes are yet to be understood.
-"""
 
 # ╔═╡ 9e7308b3-7d80-4189-a21a-0667f7b828e5
 md"### Stall Speed
@@ -773,10 +768,10 @@ TbWs = range(0, 0.5, length = n);
 
 # ╔═╡ 4f86c8b6-9fcf-42e9-9232-36eca90b6489
 begin 
-	plot(xlabel = "W/S, N/m²", ylabel = "T/W", title = "Matching Chart", xlim = (0, 10000))
+	plot(xlabel = "W/S, N/m²", ylabel = "T/W", title = "Matching Chart", xlim = (0, 6000))
 	plot!(stalls, TbWs, label = "Stall")
-	annotate!(3000, 0.2, "Feasible")
-	annotate!(7000, 0.2, "Infeasible")
+	annotate!(1000, 0.2, "Feasible")
+	annotate!(4000, 0.2, "Infeasible")
 end
 
 # ╔═╡ 06398c2e-f193-4257-ad3f-d7f51c9c350b
@@ -810,7 +805,7 @@ begin
 	plot!(stalls, TbWs, label = "Stall")
 	plot!(wing_loadings, TbW_takeoff, label = "Takeoff")
 	annotate!(4000, 0.3, "Feasible")
-	annotate!(4000, 0.05, "Infeasible")
+	annotate!(1500, 0.02, "Infeasible")
 	annotate!(7500, 0.2, "Infeasible")
 end
 
@@ -830,13 +825,13 @@ landing_condition(σ, CL_max, s_FL, s_a, r = 0.6, g = 9.81) = σ * g * CL_max / 
 # ╔═╡ a8b1c93c-30f6-4587-a5e3-6a5d73aee85d
 begin
 	CL_landing = 2.2 # Maximum lift coefficient at landing
-	s_L = 2800 		 # Runway length
+	s_L = 2300 		 # Runway length (XCH=6900ft-->2300m)
 	s_a = 305 		 # Approach distance
 	r = 0.6 		 # FAR-25 condition
 end
 
 # ╔═╡ bee5fe62-691b-4a84-9aae-a4c90260af96
-landing_sls = 1/WF_landing * landing_condition(σ, CL_landing, s_L, s_a, r)
+landing_sls = 1/LandingFF * landing_condition(σ, CL_landing, s_L, s_a, r)
 
 # ╔═╡ 21cf6e63-16e7-4d8c-8f0f-6db068b600ed
 wbs_landing = fill(landing_sls, n);
@@ -1990,13 +1985,12 @@ weakdeps = ["OffsetArrays", "StaticArrays"]
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
-git-tree-sha1 = "2aded4182a14b19e9b62b063c0ab561809b5af2c"
+git-tree-sha1 = "5ef59aea6f18c25168842bded46b16662141ab87"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.8.0"
-weakdeps = ["ChainRulesCore", "Statistics"]
+version = "1.7.0"
+weakdeps = ["Statistics"]
 
     [deps.StaticArrays.extensions]
-    StaticArraysChainRulesCoreExt = "ChainRulesCore"
     StaticArraysStatisticsExt = "Statistics"
 
 [[deps.StaticArraysCore]]
@@ -2461,7 +2455,7 @@ version = "1.4.1+1"
 # ╠═8672a6f2-415c-4605-b7c5-7420c47da4a5
 # ╠═a26c2944-b6f0-41b2-8375-c9df91370234
 # ╠═11631c94-6c25-435f-a640-365218cc7abc
-# ╟─1696eb91-1317-49d2-8762-22092bb3f429
+# ╠═1696eb91-1317-49d2-8762-22092bb3f429
 # ╠═523094f1-8534-4e7a-8f65-034291332647
 # ╠═b00fb477-0a26-44ed-a8f9-c8504a454845
 # ╠═030faac0-b5af-424a-b422-fdf7e3fa9567
@@ -2545,12 +2539,11 @@ version = "1.4.1+1"
 # ╠═4bb61ea6-1b71-4d94-bdd2-58b8c016f171
 # ╠═d415634d-1ea9-435a-8de5-4b7a2350cd17
 # ╠═d6f94de5-1457-426f-875a-35f8031bfafc
-# ╠═b572d05c-98b2-4653-a012-60310d3700c3
-# ╠═8c14d493-f5ef-4f82-9970-8369acf181a7
+# ╟─8c14d493-f5ef-4f82-9970-8369acf181a7
 # ╠═4ad77bb4-ea2c-4f2d-86a7-badb5b9fac9c
 # ╠═a8b1c93c-30f6-4587-a5e3-6a5d73aee85d
-# ╠═bee5fe62-691b-4a84-9aae-a4c90260af96
-# ╠═21cf6e63-16e7-4d8c-8f0f-6db068b600ed
+# ╟─bee5fe62-691b-4a84-9aae-a4c90260af96
+# ╟─21cf6e63-16e7-4d8c-8f0f-6db068b600ed
 # ╠═ef4c561e-89c4-42e2-a169-f30a5bbe0871
 # ╠═b4323785-5a16-41ed-954b-effbec5002b9
 # ╟─00000000-0000-0000-0000-000000000001
