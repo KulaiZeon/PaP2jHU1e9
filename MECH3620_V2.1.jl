@@ -1,8 +1,18 @@
 ### A Pluto.jl notebook ###
-# v0.19.32
+# v0.19.38
 
 using Markdown
 using InteractiveUtils
+
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
+        el
+    end
+end
 
 # ╔═╡ 065fbab5-6f9c-49e7-8a23-99bacd5da413
 begin
@@ -39,7 +49,7 @@ Thank you for choosing us for manufacturing your new private jet. As per the doc
 
 | **Requirements~of~Proposed~Aircraft** | **Numbers** |
 :----|----|
-| Maximum Takeoff Weight(MTOW) | $Not~Exceed~8000~kg$ | 
+| Maximum Takeoff Weight(MTOW) | $Not~Exceeding~8000~kg$ | 
 | Capacity | $Up~to~8~passengers~in~total$ |
 | Speed | $At~least~as~fast~as~other~similar~aircraft~in~the~market$ |
 | Maximum Wingspan | $15.5~m$ |
@@ -110,24 +120,12 @@ md"### Constants "
 begin
 	g = 9.81
 	gamma = 1.4
-	R = 273
-	Wcrew = (8*100)*g #Weight(N) 8occupants configuration
-	Wknown=Woccupants=Wcrew
-	Wpl = 950*g #Weight(N) Around max payload from CJ3 included luagge
-
-	SFC_cruise = 0.8/3600; 			# (1/sec) Typical value of Specific Fuel Consumption at cruise stage
-	SFC_holding = 2 * SFC_cruise; 	# Loiter Pattern SFC 
-	E = 2700; 					 	# (sec) Loiter time 30 minutes	
-
-	LD_max = 11.5; 					# Lift to Drag Ratio (assume)  			
-	LD_cruise = 0.866 * LD_max; 	# Cruise Lift to Drag ratio (0.866 comfirmed byTA)
-	
-	M = (770/3.6)/(gamma*R*216.66)^(1/2) #MAX Mach number(0.74)
-	Hc = 43000*0.3048 				#Cruis Altitude(m)	
-	c1 = 294.9; 					# (m/s) Speed of sound    		
-	V1 = M*c1; 						# (m/s) Cruising Speed
-	R1 = 2040*1852; 				# (m)   Cruising Range   
-	
+	R = 273 #Specific gas constant
+	Wcrew = (1*90)*g #Weight (N) for 2 Crew
+	Wpl = (90*7+450)*g # From requirement, Payload must not be less than 900KG WITH 450KG Baggage
+	LD_max = 12; 					# Lift to Drag Ratio (assume)  			
+	M = 0.81
+	Hc = 40000*0.3048 	;			#Cruise Altitude(m)	
 end;
 
 # ╔═╡ ed43e6b5-7113-4c81-bc04-c04f5cf3ae40
@@ -155,104 +153,107 @@ md" ### Segment Fuel Fraction
 "
 
 # ╔═╡ 16dd553a-3e71-41df-b5e8-c6cab9a63f17
-html"""
-<p>Fuel fraction by class</p>
-
-<img src="https://photos.fife.usercontent.google.com/pw/AP1GczPl6Rnstt4rWCSNul80NF7GmLfeTCT-ypr0UO4QgUSRk5kqgOaLWV5J=w598-h272-s-no-gm?authuser=1"
-
->
+md"""
+![Fuel Fraction)](https://raw.githubusercontent.com/KulaiZeon/3620/main/fuel%20fraction.jpg?token=GHSAT0AAAAAACP3AMFDZ43FY7ZUP6YFYEHUZP2VHYA)
 """
 
 # ╔═╡ 8ffec899-a8f5-4255-901e-ae60bf52ab25
 html"""
 <p>Flight path</p>
 
-<img src="https://s2.ezgif.com/tmp/ezgif-2-bebbe4e85c.jpg"
+<img src="https://raw.githubusercontent.com/KulaiZeon/3620/main/Straight%20Line%20Flight%20Plan.png?token=GHSAT0AAAAAACP3AMFDH3CS6D4P5CPJUZCIZP2WYAQ"
 
 >
 """
 
 # ╔═╡ e88b5067-b4e1-4dea-9c70-7e2d5f8f05e8
 md"""
-We consider a mission consisting of 12 segments in the following order:
+We consider a mission consisting of 8 segments in the following order:
 
 1. Warmup
 2. Taxing
 3. Takeoff 
 4. Climb
-5. Cruise: $476$ nautical miles (nmi) [TOC to VEPAM]
-6. Climb [VEPAM to KARAN]
-7. Cruise: $544$ nautical miles (nmi) [KARAN to ESBUM]
-8. Loiter: $5$ mins [ESBUM to ELALO]
-9. Cruise: $77$ nmi [ELALO to TOD]
-10. Loiter: $30$ mins "By the tutorial time"
-11. Descent
-12. Landing
+5. Cruise: $1837 ~nm$
+6. Loiter: $30$ mins 
+7. Descent
+8. Landing
 """
+
+# ╔═╡ f8420532-af8b-427f-ab69-1f4309962f2f
+md"""
+### The respective Fuel Fraction will be as follows:
+	WarmupFF = 0.99
+	TaxiFF = 0.995
+	TakeoffFF = 0.995 
+	ClimbFF = 0.98 
+	DescentFF = 0.99
+	LandingFF = 0.992 
+"""
+
+# ╔═╡ 11631c94-6c25-435f-a640-365218cc7abc
+begin
+	WarmupFF = 0.99;
+	TaxiFF = 0.995;
+	TakeoffFF = 0.995 ;
+	ClimbFF = 0.98 ;
+	
+	DescentFF = 0.99 ;
+	LandingFF = 0.992 ;
+end;
 
 # ╔═╡ a92053bd-3057-4eac-9913-b053e35e1f18
 md"
 ### Cruise Weight Fraction
-$$WF_{\mathrm{cruise}} = \exp\left(-\frac{R \times SFC}{V \times (L/D)_\text{cruise}}\right)$$
+$$\left(\frac{W_3}{W_2}\right)_\text{cruise}  = \exp\left(-\frac{R \times SFC}{V \times (L/D)_\text{cruise}}\right)$$
 The cruise lift-to-drag ratio can be approximated as $(L/D)_\text{cruise} = 0.866(L/D)_\max$.
 "
+
+# ╔═╡ 35e141dc-b022-4ebe-82c8-8e17e387770a
+cruise_weight_fraction(R, SFC, V, L_D) = exp(-R * SFC / (V * L_D));
+
+# ╔═╡ 0d2e6de7-1882-4240-bdc0-16f8816f4c59
+md"""
+ We consider, at cruise, the $SFC$ to be 0.8 per Hour
+"""
+
+# ╔═╡ cafbaddb-ed2c-487f-b18b-7cb85e5aeeb4
+begin
+	c1 = 294.9; # (m/s) Speed of sound   
+	SFC_cruise = 0.75/3600
+	V1 = M*c1 #Cruise Mach Number
+	R1 = 2016*1852 # (m)   Cruising Range 
+	LD_cruise = 0.866 * LD_max; # Cruise Lift to Drag ratio (0.866 comfirmed byTA)
+end;
+
+# ╔═╡ 2826481d-c419-4645-9f92-739ef73870a6
+cruiseFF1 = cruise_weight_fraction(R1, SFC_cruise, V1, LD_cruise)
 
 # ╔═╡ 836289a7-a6ae-48e9-90b2-eb30c3d865f0
 md"
 ### Loiter Weight Fraction
 
-$$WF_\text{Loiter} = \exp\left(-\frac{E \times SFC}{(L/D)_\max}\right)$$
-The SFC in this segment can be approximated as: $SFC_\text{Loiter} \approx 2 \times SFC$
+$$\left(\frac{W_4}{W_3}\right)_\text{loiter} = \exp\left(-\frac{E \times SFC}{(L/D)_\max}\right)$$
 "
 
 # ╔═╡ eec3569b-d858-4549-a4a9-9176e8a62989
-begin
-	cruise_weight_fraction(R, SFC, V, L_D) = exp(-R * SFC / (V * L_D))
     loiter_weight_fraction(E, SFC, L_D) = exp(-E * SFC / L_D)
-end;
 
-# ╔═╡ 8672a6f2-415c-4605-b7c5-7420c47da4a5
+# ╔═╡ 7013e84b-041b-4bce-a885-c571be085e5b
 begin
-	#This will assume that LD and SFC would change in different altitude
-	crusieLD = 10 #(dimensionless)  By Roskam 10-12
-	crusieSFC = 0.5/3600 #(sec-1)  By Roskam 0.5-0.9
-	loiterLD = 12 #(dimensionless)  By Roskam 12-14
-	loiterSFC = 0.4/3600 #(sec-1)  By Roskam 0.4-0.6
-
-	crusieR1 = (578-102)*1852 #(m) TOC to VEPAM
-	crusieR2 = (1215-671)*1852 #(m) KARAN to ESBUM
-	crusieR3 = (1332-1255)*1852 #(m) ELALO to TOD
-
-	loiterE1 = 5*60 #(s) ESBUM to ELALO
-	loiterE2 = 30*60 #(s) "By the tutorial time"
+	E = 1800 # (sec) Loiter time 30 minutes	
+	SFC_holding = 0.5/3600 	# Loiter Pattern SFC 
+end;
 	
-end;
 
-# ╔═╡ a26c2944-b6f0-41b2-8375-c9df91370234
-begin
-	crusieFF1 = cruise_weight_fraction(crusieR1, crusieSFC, V1, crusieLD)
-	crusieFF2 = cruise_weight_fraction(crusieR2, crusieSFC, V1, crusieLD)
-	crusieFF3 = cruise_weight_fraction(crusieR3, crusieSFC, V1, crusieLD)
-
-	loiterFF1 = loiter_weight_fraction(loiterE1, loiterSFC, loiterLD)
-	loiterFF2 = loiter_weight_fraction(loiterE2, loiterSFC, loiterLD)
-end
-
-# ╔═╡ 11631c94-6c25-435f-a640-365218cc7abc
-begin
-	WarmupFF = 0.99
-	TaxiFF = 0.995
-	TakeoffFF = 0.995 
-	ClimbFF = 0.98 
-	DescentFF = 0.99 
-	LandingFF = 0.992 
-end;
+# ╔═╡ 7d4b3405-dda0-4039-8376-3640cfc600cd
+loiter1FF = loiter_weight_fraction(E, SFC_holding, LD_max)
 
 # ╔═╡ 1696eb91-1317-49d2-8762-22092bb3f429
 md"""## Fuel Weight Fractions
 The fuel weight fraction is given by:
 ```math
-\frac{W_f}{W_0} = a\left(1 - \prod_{i = 1}^{N}\frac{W_{f_i}}{W_{f_{i-1}}}\right)
+W_{f_0} \equiv \frac{W_f}{W_0} = a\left(1 - \prod_{i = 1}^{N}\frac{W_{f_i}}{W_{f_{i-1}}}\right)
 ```
 where the input $a$ is the additional fuel reserve (usually as a percentage of the total).
 """
@@ -261,10 +262,13 @@ where the input $a$ is the additional fuel reserve (usually as a percentage of t
 fuel_weight_fraction(fuel_fracs, a) = a * (1 - prod(fuel_fracs));
 
 # ╔═╡ b00fb477-0a26-44ed-a8f9-c8504a454845
-FFs = [WarmupFF,TaxiFF,TakeoffFF,ClimbFF,crusieFF1,ClimbFF,crusieFF2,loiterFF1,crusieFF3,loiterFF2,DescentFF,LandingFF];
+FFs = [WarmupFF,TaxiFF,TakeoffFF,ClimbFF,cruiseFF1,loiter1FF,DescentFF,LandingFF];
+
+# ╔═╡ c44a6d2a-1eb0-4da9-a7cb-e83c3662da85
+a=1.06 #Additional reserve fuel
 
 # ╔═╡ 030faac0-b5af-424a-b422-fdf7e3fa9567
-WfWTO = fuel_weight_fraction(FFs, 1.06)
+WfWTO = fuel_weight_fraction(FFs, a)
 
 # ╔═╡ b979ddb9-ca6b-4ee2-942c-661eec458189
 md"### Plot-Fuel Fraction vs Mission Segment Number"
@@ -286,38 +290,71 @@ md"""## Empty Weight Fraction
 html"""
 <h5>Roskam's regrssion coefficient</h5>
 
-<img src="https://s4.ezgif.com/tmp/ezgif-4-32ae401755.jpg"
+<img src="https://raw.githubusercontent.com/KulaiZeon/3620/main/linear%20regres.jpg?token=GHSAT0AAAAAACP3AMFCGLJ2TTMGCRFQQJAAZP2VIVA"
 
 >
 """
 
-# ╔═╡ 3bb0b409-9b52-4f30-9217-734e54989e8d
-begin
-	We_array=[3874, 5316.1, 4885.6, 5831.8, 11793/2.205, 23349/2.205, 15100/2.205,25360/2.205, 1610, 7203/2.205]*g #10*1 matrix (N)
-	W0_array=[6291,10433,7303,9525,8150,38850/2.205,26100/2.205,19440,2727,4519]*g #10*1 matrix (N)
-end;
-
-# ╔═╡ b6c97d72-9bc5-4065-8233-9efa6ac8d5ce
-begin
-	X = [ones(size(We_array)) log10.(We_array)]
-	y = log10.(W0_array)
-
-	(O,P) = inv(X'*X)*X'*y
-	pltx = 4:0.1:5
-	plty = O*ones(size(pltx))+P*pltx
-end;
-
-# ╔═╡ f8656f65-afc2-4700-9976-188213d1428b
-md"### Plot of Maximum Takeoff Weight vs Empty Weight"
-
-# ╔═╡ cee7c39f-3c6d-467d-839e-0379b64251d5
-begin
-	scatter(log10.(We_array), log10.(W0_array), legend=false, xlabel="Empty Weight(log10)", ylabel="MOTW(log10)")
-	plot!(pltx, plty)
-end
-
 # ╔═╡ 06a3b160-88ff-4e6e-a633-36f7bae15a72
 empty_weight_raymer(WTO, A, B) = A * WTO^B
+
+# ╔═╡ acc0a6b8-a8b7-4a7f-bec7-3d7c5b0eb41e
+A, B = 0.97, -0.06 #Raymer coefficient
+
+# ╔═╡ 4a02a0dc-e8c1-4e5a-8184-14c79c9b220f
+WTO_range = 5000:500:10000 # kg
+
+# ╔═╡ 8215cc76-9a68-42a7-86aa-44bfe0e5c030
+WeWTO_range = empty_weight_raymer.(WTO_range .* g, A, B) # Broadcasting over range
+
+# ╔═╡ f6f00355-a1c4-47f6-a4da-e1d0cf075a7b
+plot(
+	WTO_range, # x-values (Takeoff weights)
+	WeWTO_range, # y-values (Empty weight ratios) 
+	xlabel = "Takeoff Weight", 
+	ylabel = "Empty Weight / Takeoff Weight", 
+	label = ""
+)
+
+# ╔═╡ 43e0a31a-0864-4a9c-858f-561d2e5e0ec6
+md"""### Fixed-Point Iteration
+We need to solve the following equation for $W_0$:
+```math
+\begin{align}
+W_0 & = \frac{W_\text{payload} + W_\text{crew}}{1 - \displaystyle\frac{W_f}{W_0} - \displaystyle\frac{W_e}{W_0}},
+\end{align}
+```
+where
+```math
+\begin{align}
+\text{Fuel Weight Fraction:}  &\quad  & \frac{W_f}{W_0} \equiv W_{f_0} & = a\left(1 - \prod_{i = 1}^{N}\frac{W_{f_i}}{W_{f_{i-1}}}\right), \\
+\text{Empty Weight Fraction:} &\quad & \frac{W_e}{W_0} \equiv W_{EF}(W_0) & = AW_0^B.
+\end{align}
+```
+
+To numerically solve the equation, you can:
+
+1. Begin with a guess for $W_0$, insert it into the right-hand expression and check the computed value to get the left-hand side, a new value of $W_0$. 
+2. If you insert this new value of $W_0$ into the right-hand side again, you will get another new value for $W_0$.
+3. Repeat the process for more iterations. Eventually, the value of $W_0$ should converge to a _fixed point_.
+
+
+Here, we will denote the iteration number of a variable by an additional subscript $(-)_n$:
+```math
+\begin{align}
+\text{Takeoff Weight Iteration:} & \quad & (W_0)_n & = \frac{W_\text{payload} + W_\text{crew}}{1 - W_{f_0} - W_{EF}[(W_0)_{n-1}]}\\
+% \text{Equality:} & \quad & (W_0)_n & = (W_0)_{n-1}
+\end{align}
+```
+So, we need to evaluate the right-hand expression to obtain the value of $W_0$ for the $n^\text{th}$ iteration, and compare it to the value of $W_0$ in the $(n-1)^{\text{th}}$ iteration.
+
+Let the following indicate the relative error for the $n$th iteration:
+```math
+\varepsilon_n = \left|\frac{(W_0)_n - (W_0)_{n-1}}{(W_0)_{n-1}}\right|
+```
+
+We would like our analysis to converge below some tolerance $\varepsilon_\text{tol}$, i.e. the error should be $\varepsilon_{n} < \varepsilon_\text{tol}$.
+"""
 
 # ╔═╡ 960c6d25-0a82-4368-9d34-54cb8624c6d0
 function compute_maximum_takeoff_weight(
@@ -364,24 +401,63 @@ function compute_maximum_takeoff_weight(
 	
 	# Return arrays of takeoff weights and errors 
 	WTOs, errors[1:length(WTOs)]
-end;
+end
 
-# ╔═╡ 17e18aa0-29fe-46e9-9a6f-85188a818695
+# ╔═╡ 5494bd3a-9265-4bd5-959b-373518271d13
+W0 = Wpl + Wcrew # From Requirement, Newtons
+
+# ╔═╡ 21a2c7f2-cf3b-4cf4-8ae9-76e9b2f9e3f9
+max_iter = 20;
+
+# ╔═╡ 0cea009b-228c-432c-858e-142fd088a7f5
+begin
+	num_slider = @bind num NumberField(1:max_iter, default = 6)
+	md"""
+	Number of iterations: `num` = $(num_slider)
+	"""
+end
+
+# ╔═╡ f2784112-a190-477c-a016-b79943a7837f
 WTOs, errors = compute_maximum_takeoff_weight(
-					W0i, Wpl, Wcrew, WfWTO, 10^(-O/P), (1-P)/P;
-					num_iters = 20, 
+					W0, Wpl, Wcrew, WfWTO, A, B;
+					num_iters = num, 
 					tol = 1e-12
-				   )
+				   );
 
-# ╔═╡ 6e2b5ba0-e4e6-4af2-ae96-48f2f86e6f6b
-md" ### Maximum takeoff weight"
+# ╔═╡ 1e8d75aa-35b1-4385-8441-af85185a840f
+WTOs
 
-# ╔═╡ 29c77775-f591-4cbc-8373-7eb08976168a
-MTOW_kg = WTOs[end] / g ### The WfWTO might need to lower
+# ╔═╡ ee999a0e-8cb1-49f8-b1c8-f03013c716c8
+MTOW_kg = WTOs[end] / g # kg
+
+# ╔═╡ c256c481-f142-4a23-8382-f9aff0c8d6aa
+md"""
+## Iterations and Error chart for MTOW calculation
+"""
+
+# ╔═╡ ff0ebbd1-1cef-413f-a1c8-1926f2d9d82d
+begin
+	plot1 = plot(WTOs, 
+		label = "", 
+		ylabel = "MTOW (N)", 
+		xlabel = "Iterations"
+	)
+	plot2 = plot(errors,
+		label = "", 
+		ylabel = "Error, ε", 
+		yscale = :log10, 
+		xlabel = "Iterations"
+	)
+	
+	plot(plot1, plot2, layout = (2,1))
+end
+
+# ╔═╡ b0f149fe-5efe-40bf-9555-ff654fa31fbc
+println("The expected MTOW is: ",MTOW_kg)
 
 # ╔═╡ 49ebf579-ff75-4b83-86f1-aa46ce738597
 md"""
-# Preliminary Sizing
+# Preliminary Sizing ###NOT YET CORRECTED
 """
 
 # ╔═╡ 2addc67b-df44-4f9c-a02b-ab48444db914
@@ -455,13 +531,13 @@ md"""
 	Substituting the specification of RJet into the equation:
 
 ```math
-Wing~Loading~(RJet) = \frac{8,000}{24.82}
+Wing~Loading~(RJet) = \frac{7937}{24.82}
 ```
 	"""
 
 # ╔═╡ 0c05bd61-968b-4dc6-86ce-9688b5b30cef
 begin
-	Rjet_MTOW = 8000 
+	Rjet_MTOW = 7319
 	Rjet_WingLoading = Rjet_MTOW / Rjet_WingArea 
 	println("The target wing loading is: ",Rjet_WingLoading)
 end
@@ -477,10 +553,10 @@ Based on our mission requirement, and making reference to the reference aircraft
 | Aspect Ratio ($AR$) | $9.68$ | $9.68$ |
 | Span ($b$) | $15.5~m$ | $50.82~ft$ |
 | Wing Area ($S$) | $24.82~m^2$ | $267.1~ft^2$ |
-| MTOW ($W_0$) | $8,000~kg$ | $17,637~lbs$ |
-| Takeoff Wing Loading $(W/S)_\text{takeoff}$ | $322.33~kg/m^2$ | $66.01~lbs/ft^2$ |
-| Cruise Mach Number $(M_\text{cruise})$ | $0.85$ | $0.85$ |
-| Cruise Altitude ($h_\text{cruise}$) | $13106~m$ | $43,000~ft$ |
+| MTOW ($W_0$) | $7,319~kg$ | $16,136~lbs$ |
+| Takeoff Wing Loading $(W/S)_\text{takeoff}$ | $294.89~kg/m^2$ | $60.40~lbs/ft^2$ |
+| Cruise Mach Number $(M_\text{cruise})$ | $0.81$ | $0.81$ |
+| Cruise Altitude ($h_\text{cruise}$) | $12192~m$ | $4,0000~ft$ |
 | Ceiling Altitude ($h_\text{ceiling}$) | $13716~m$ | $45,000~ft$ | 
 ---
 
@@ -537,106 +613,6 @@ gr(
 	size = (900, 700),  # INCREASE THE SIZE FOR THE PLOTS HERE.
 	palette = :tab20    # Color scheme for the lines and markers in plots
 )
-
-# ╔═╡ a717ac86-85b0-46b4-87d1-8cc46df43858
-md"""
-### Fuselage Design
-"""
-
-# ╔═╡ 37ce28ef-f628-4a97-a81b-4834a8e18884
-# Fuselage definition
-fuse = HyperEllipseFuselage(
-    radius = 3.04,          # Radius, m
-    length = 63.5,          # Length, m
-    x_a    = 0.15,          # Start of cabin, ratio of length
-    x_b    = 0.7,           # End of cabin, ratio of length
-    c_nose = 1.6,            # Curvature of nose
-    c_rear = 1.3,           # Curvature of rear
-    d_nose = -0.5,          # "Droop" or "rise" of nose, m
-    d_rear = 1.0,           # "Droop" or "rise" of rear, m
-    position = [0.,0.,0.]   # Set nose at origin, m
-)
-
-# ╔═╡ 991c242b-5668-4071-bdb2-0469c81cbe0b
-toggles
-
-# ╔═╡ 24032cff-7150-43f4-80d5-6f534cc8d461
-plt_vlm
-
-# ╔═╡ e1f6717b-5006-4539-9935-dca8358c03a1
-md"""
-### Wing Design (NASA SC(2)-0414 and (NASA SC(2)-0410))
-"""
-
-# ╔═╡ c09c587f-aba5-472e-a476-33e16ed94c9c
-begin
-	# AIRFOIL PROFILES (NASA SC(2)-0414)
-	foil_w_r = read_foil(download("http://airfoiltools.com/airfoil/seligdatfile?airfoil=sc20414-il")) # Root 
-	foil_w_m = read_foil(download("http://airfoiltools.com/airfoil/seligdatfile?airfoil=sc20414-il")) # Midspan
-	foil_w_t = read_foil(download("http://airfoiltools.com/airfoil/seligdatfile?airfoil=sc20410-il")) # Tip
-end
-
-# ╔═╡ 5b685898-dbba-439a-b07f-f703491ad986
-# Wing
-wing = Wing(
-    foils       = [foil_w_r, foil_w_m, foil_w_t], # Airfoils (root to tip)
-    chords      = [14.0, 9.73, 1.43561],        # Chord lengths
-    spans       = [14.0, 46.9] / 2,             # Span lengths
-    dihedrals   = fill(6, 2),                   # Dihedral angles (deg)
-    sweeps      = fill(35.6, 2),                # Sweep angles (deg)
-    w_sweep     = 0.,                           # Leading-edge sweep
-    symmetry    = true,                         # Symmetry
-
-	# Orientation
-    angle       = 3,       # Incidence angle (deg)
-    axis        = [0, 1, 0], # Axis of rotation, x-axis
-    position    = [0.35fuse.length, 0., -2.5]
-)
-
-# ╔═╡ fab99f96-2d8c-465d-90c2-f2f9773920cd
-md"
-### Wing Geometric Information
-"
-
-# ╔═╡ 4e73edc6-ac5f-43cc-a094-f35925ed64d2
-foils(wing)
-
-# ╔═╡ 33a11564-5b1b-4376-ad64-7cc0ab2deb50
-chords(wing)
-
-# ╔═╡ 2a20fc7a-95c0-478b-bc16-57221f68872e
-spans(wing)
-
-# ╔═╡ c54839c8-963d-45b1-a188-aaedb77fdab1
-dihedrals(wing)
-
-# ╔═╡ 83fe2f1c-2071-4890-9646-3140c6a95ec0
-sweeps(wing)
-
-# ╔═╡ 2eff6e0d-c8a8-4bb8-9fd5-0072e211068f
-begin
-	wingAR = aspect_ratio(wing) # Aspect ratio
-	wingspan = spans(wing) # Span length (m)
-	wingarea = projected_area(wing) # Projected area (m²)
-	wingchord = mean_aerodynamic_chord(wing) # Mean aerodynamic chord (m)
-	x_w, y_w, z_w = wing_mac = mean_aerodynamic_center(wing) # Mean aerodynamic center (m)
-	
-end
-
-# ╔═╡ 9205acb8-4951-4b6f-b167-a1b4db38c620
-md"""
-### XFOIL analysis using the NASA SC(2)-0414 and NASA SC(2)-0410.
-
-"""
-
-# ╔═╡ dc933fe1-c849-4694-bda3-b66623183bea
-md"""
-To evaluate the performance of the NACA 4412 Airfoil, we utilise XFLR5 to provide us the basic aerodynamic properties for the airfoil.
-
-Our test results showed that the coefficient of lift for the airfoil that has the lowest coefficient of drag is at 0.5, whereas the 0 degree Angle-Of-Attack coefficient of lift is shown to also be 0.5.
-
-Minimum coefficient of drag = 0.01.
-"""
 
 # ╔═╡ 87c771d5-fde7-4863-a43d-a33fb5a05d2f
 md"""
@@ -715,6 +691,9 @@ begin
 		  label = "CDₘᵢₙ = $CD_min_2, CL (min drag) = $CL_min_drag_2")
 end
 
+# ╔═╡ c5c195c5-bd70-47aa-ba48-2e838e288007
+md"## Constraint Analysis"
+
 # ╔═╡ 9e7308b3-7d80-4189-a21a-0667f7b828e5
 md"### Stall Speed
 
@@ -742,7 +721,7 @@ wing_loading_stall_speed(V_stall, CL_max, ρ = 1.225) = dynamic_pressure(ρ, V_s
 begin
 	### The value 100 knots is simply obtained by a google search of "stall speed of business jet", this value should be revisited.
 	V_stall = 0.514 * 100 # 100 knots to m/s
-	CL_max = 1.5 		  # Maximum lift coefficient with no flaps
+	CL_max = 2.1 		  # Maximum lift coefficient referencing from ROSKAM landing
 end;
 
 # ╔═╡ feb7f610-5135-447f-bc37-f83e7e8a73e6
@@ -764,22 +743,33 @@ n = 15
 stalls = fill(WbS_stall, n);
 
 # ╔═╡ c8ff8fe0-2124-483e-b689-446bedd2afbf
-TbWs = range(0, 0.5, length = n);
+TbWs = range(0, 0.6, length = n);
 
 # ╔═╡ 4f86c8b6-9fcf-42e9-9232-36eca90b6489
 begin 
 	plot(xlabel = "W/S, N/m²", ylabel = "T/W", title = "Matching Chart", xlim = (0, 6000))
 	plot!(stalls, TbWs, label = "Stall")
-	annotate!(1000, 0.2, "Feasible")
-	annotate!(4000, 0.2, "Infeasible")
+	annotate!(1750, 0.25, "Feasible")
+	annotate!(4750, 0.25, "Infeasible")
 end
 
 # ╔═╡ 06398c2e-f193-4257-ad3f-d7f51c9c350b
-md"""### Takeoff
+md"### Takeoff
+
+Trust-to-Weight ratio for takeoff stage:
+
+```math
+\left(\frac{T}{W}\right)_\text{Takeoff} = \frac{0.0929}{4.448}\ \frac{W_0/S_\text{ref}}{(\rho/\rho_\text{SL})C_\text{max,TO}TOP} \quad (SI)
+```
+"
+
+# ╔═╡ e6577e5d-5891-4698-b97b-3e71e95a17dc
+md"""
+
 Using Raymer's chart for the takeoff condition:
 
 ```math
-\frac{(W_0/S)}{\sigma C_{L_{TO}}(T_0/W_0)} \leq TOP = 280
+\frac{(W_0/S)}{\sigma C_{L_{TO}}(T_0/W_0)} \leq TOP = 185
 ```
 
 """
@@ -789,8 +779,8 @@ takeoff_condition(WbS, σ, CL_takeoff, TOP) = (0.0929/4.448) * WbS / (TOP * σ *
 
 # ╔═╡ f249f1a0-f11c-446b-b91e-a63a55df45ef
 begin
-	CL_takeoff = 2.0
-	TOP = 280
+	CL_takeoff = 1.8
+	TOP = 185 # should be 185 according to lec
 end
 
 # ╔═╡ 4bb61ea6-1b71-4d94-bdd2-58b8c016f171
@@ -804,8 +794,8 @@ begin
 	plot(ylabel = "(T/W)", xlabel = "(W/S), N/m²", title = "Matching Chart")
 	plot!(stalls, TbWs, label = "Stall")
 	plot!(wing_loadings, TbW_takeoff, label = "Takeoff")
-	annotate!(4000, 0.3, "Feasible")
-	annotate!(1500, 0.02, "Infeasible")
+	annotate!(2000, 0.3, "Feasible")
+	annotate!(2000, 0.05, "Infeasible")
 	annotate!(7500, 0.2, "Infeasible")
 end
 
@@ -813,25 +803,25 @@ end
 md"""### Landing
 
 ```math
-\frac{W_0}{S} \leq \sigma \left(\frac{W_0}{W_L}\right)\left[\frac{{\color{orange} g} C_{L_\max, L}}{5}\left(s_L - s_a\right)\right]
+\frac{W_0}{S} = \sigma \left(\frac{W_0}{W_L}\right)g\left[\frac{C_{L_\max, L}}{5}\left(0.6s_\text{FL} - s_a\right)\right]
 ```
 
 The $\color{orange} g$ is included to convert the weight's units into Newtons.
 """
 
 # ╔═╡ 4ad77bb4-ea2c-4f2d-86a7-badb5b9fac9c
-landing_condition(σ, CL_max, s_FL, s_a, r = 0.6, g = 9.81) = σ * g * CL_max / 5 * (r * s_FL - s_a)
+landing_condition(σ, CL_max, s_FL, s_a, r = 0.6, g = 9.81) = σ * g * CL_max /5 * (r * s_FL - s_a)
 
 # ╔═╡ a8b1c93c-30f6-4587-a5e3-6a5d73aee85d
 begin
-	CL_landing = 2.2 # Maximum lift coefficient at landing
-	s_L = 2300 		 # Runway length (XCH=6900ft-->2300m)
-	s_a = 305 		 # Approach distance
+	CL_landing = 2.3 # Maximum lift coefficient at landing
+	s_FL = 2100 		 # Landing field length (Total landing distance)   (XCH=6900ft-->2300m)
+	s_a = 183 		 # Approach distance (m)
 	r = 0.6 		 # FAR-25 condition
 end
 
 # ╔═╡ bee5fe62-691b-4a84-9aae-a4c90260af96
-landing_sls = 1/LandingFF * landing_condition(σ, CL_landing, s_L, s_a, r)
+landing_sls = 1/LandingFF * landing_condition(σ, CL_landing, s_FL, s_a, r)
 
 # ╔═╡ 21cf6e63-16e7-4d8c-8f0f-6db068b600ed
 wbs_landing = fill(landing_sls, n);
@@ -842,11 +832,293 @@ begin
 	plot!(stalls, TbWs, label = "Stall")
 	plot!(wing_loadings, TbW_takeoff, label = "Takeoff")
 	plot!(wbs_landing, TbWs, label = "Landing")
-	annotate!(4000, 0.3, "Feasible")
+	annotate!(2000, 0.4, "Feasible")
 end
 
 # ╔═╡ b4323785-5a16-41ed-954b-effbec5002b9
+md"""### Climb Constraints
 
+The general climb formula is:
+
+```math
+\left(\frac{T}{W}\right)_\text{climb} = \frac{k_s^2}{C_{L_\text{max,climb}}}C_{D_0} + k\frac{C_{L_\text{max,climb}}}{k_s^2} + G, \quad k_s = \frac{V}{V_\text{stall}}, k = \frac{1}{\pi e AR}
+```
+
+Applying the *thrust correction factors*:
+
+```math
+\left(\frac{T}{W}\right)_\text{takeoff} = \left(\frac{1}{0.8}\right){\color{blue} \left(\frac{1}{0.94}\right) \left(\frac{N_\text{engines}}{N_\text{engines} - 1}\right)\left(\frac{W}{W_\text{takeoff}}\right) } \left(\frac{T}{W}\right)_\text{climb}
+```
+
+The factors highlighted in orange are omitted when the engine is not at maximum continuous thrust, or not in an OEI condition, or when $W = W_\text{takeoff}$ respectively.
+"""
+
+# ╔═╡ 03caea26-ae46-4eef-9123-c0d8999dd2c0
+climb_condition(k_s, CD0, CL_max, k, G) = (k_s^2 / CL_max) * CD0 + k * CL_max / k_s^2 + G
+
+# ╔═╡ d1def77c-8a51-40b5-bdb4-f64fcaefe71d
+function thrust_corrected_climb(k_s, CD0, CL_max, K, G, n_eng, # Necessary inputs
+		weight_factor = 1; # Optional input with default = 1
+		MCT = false, OEI = false # Named arguments
+	) 
+	 
+	OEI_factor = ifelse(OEI, n_eng / (n_eng - 1), 1) # One-engine-out factor
+	MCT_factor = ifelse(MCT, 1 / 0.94, 1) # Maximum continuous thrust factor
+	
+	(1 / 0.8) * MCT_factor * OEI_factor * weight_factor * climb_condition(k_s, CD0, CL_max, K, G)
+end
+
+# ╔═╡ 82a8f4fd-95e7-45f2-9c67-f5438ad40ed9
+begin
+	CL_max_climb = 2.2  # Maximum climb lift coefficient
+	n_eng 		 = 2 	# Number of engines
+	AR 			 = 9  # Aspect ratio of wing
+end;
+
+# ╔═╡ 7faabb3e-c7c6-4234-8dbc-d3836d91db8e
+md"""
+
+| **Rules** | **Climb Conditions** | **k** | **G(%)** |**Wing Configuratoin**|**Weight Configuratoin**|
+:-------------|-----------------------|-----------------------|-----------------------|-----------------------|-----------------------|
+| $23.66$ | takeoff climb OEI | >1.2 |>1.2 | takeoff flaps, gear down | MTOW |
+| $23.67$ | Climb OEI | >1.2 |>1.2 | flaps retracted, gear up|MTOW|
+| $23.69$ | enroute climb | >1.2 |>1.2 | flaps retracted, gear up|MTOW|
+| $23.77$ | bulked landing climb| >1.3 |>2.5 |landing flaps, gear down| MLW|
+
+
+"""
+
+# ╔═╡ d72c0a85-12f2-4156-ac1b-b4446de0a917
+md"""
+
+### CD0 and e Settings (just for reference)
+
+
+| **Configuration** | **$\Delta C_{D_0}$** | **$e$** |
+:---------------|-----------------|--------|
+|clean(no flaps)|0|0.80-0.85|
+|takeoff flaps|0.010-0.020|0.75-0.8|
+|landing flaps|0.055-0.075|0.70-0.75|
+|landing gear(up)|0.015-0.025|no effect|
+
+For the takeoff and landing flaps, we typically use the smaller CD0 for gear up and the larger one for gear down
+"""
+
+# ╔═╡ c1414a3b-7a13-4d24-8a05-6a92cbf96c05
+md"""
+### CD0 and e Settings (using This setting)
+CD0 and e with Changes in Flaps Configuration
+The zero-lift drag coefficient $C_{D_0}$ and span efficiency factor $e$ change with the configuration of flaps.
+
+```math
+C_{D_0} + \Delta C_{D_0}
+```
+
+| Configuration | $\Delta C_{D_0}$ | $e$ |
+:---------------|-----------------|-----|
+Flaps at $0^\circ$ | $0 | $0.85 |
+Flaps at $5^\circ$, gear down | $0.035 | $0.8 |
+Flaps at $5^\circ$, gear up | $0.01 | $0.8 |
+Flaps at $10^\circ$, gear down | $0.055 | $0.75 |
+Flaps at $10^\circ$, gear up | $0.03 | $0.75 |
+"""
+
+# ╔═╡ 90ae6c9b-3ed7-40a9-b184-a29cd8637937
+begin
+	# Flaps at 0 deg (Cruise)
+	e_0deg  = 0.85
+	ΔCD0_0deg_up = 0. # Clean
+
+	# Flaps at 5 deg (Take-off)
+	e_5deg  = 0.8
+	ΔCD0_5deg_down = 0.035 # Gear Down
+	ΔCD0_5deg_up =  0.01 # Gear Up
+	
+	# Flaps at 10 deg (Landing)
+	e_10deg = 0.75 
+	ΔCD0_10deg_down = 0.055 # Gear Down
+	ΔCD0_10deg_up =  0.03 # Gear Up
+end
+
+# ╔═╡ f07cca3c-c158-40dd-be46-00eae0eb47b8
+md"""### Climb 1: Takeoff Climb OEI
+"""
+
+# ╔═╡ 9d5d2fce-cbd2-451b-b9c4-5640e82c4093
+begin	
+	k_s_takeoff  = 1.2
+	G_takeoff 	 = 0.012
+	ΔCD0_takeoff = 0.035
+	k_takeoff 	 = induced_drag_coefficient(e_5deg, AR)
+	WF_takeoff_climb = 0.99 * TakeoffFF # Takeoff climb weight fraction (dont know why need to mutiplied by 0.99)
+	
+	TbW_takeoff_climb = thrust_corrected_climb(k_s_takeoff, CD_min + ΔCD0_takeoff, CL_max_climb, k_takeoff, G_takeoff, n_eng, WF_takeoff_climb, OEI = true)
+	
+	takeoff_climbs = fill(TbW_takeoff_climb, length(wing_loadings))
+end
+
+# ╔═╡ 5c211fa6-13ec-4d19-bdd3-48582cf16560
+md"### Climb 2: Transition Climb OEI "
+
+# ╔═╡ 03ab500d-5825-473d-8fed-edc87600632c
+begin	
+	k_s_trans 	= 1.2
+	G_trans 	= 0.012
+	ΔCD0_trans 	= ΔCD0_5deg_up # Flaps 5 deg, gear up
+	k_climb 	= induced_drag_coefficient(e_5deg, AR)
+	WF_trans 	= 0.99 * ClimbFF # Weight fraction at transition climb 
+	
+	TbW_trans_climb = thrust_corrected_climb(k_s_trans, CD_min + ΔCD0_trans, CL_max_climb, k_climb, G_trans, n_eng, WF_trans, OEI = true)
+	
+	trans_climb = fill(TbW_trans_climb, length(wing_loadings))
+end
+
+# ╔═╡ 7c6a892f-5cac-4653-800c-7e7b9a6bbb1c
+md"### Climb 3: Enroute Climb AEO
+
+The engine is at maximum continuous thrust here."
+
+# ╔═╡ 361dc8e5-03da-40ef-b0d0-d99e7540d865
+begin	
+	k_s_enroute  = 1.3
+	G_enroute 	 = 0.025
+	ΔCD0_enroute = 0.0 # Clean, i.e. no flaps
+	k_enroute 	 = induced_drag_coefficient(e_0deg, AR)
+	WF_enroute 	 = 0.98 * DescentFF # Weight fraction at enroute climb
+
+	TbW_enroute_climb = thrust_corrected_climb(k_s_enroute, CD0 + ΔCD0_enroute, CL_max_climb, k_enroute, G_enroute, n_eng, WF_enroute, MCT = true, OEI = true)
+	
+	enroute_climb = fill(TbW_enroute_climb, length(wing_loadings))
+end;
+
+# ╔═╡ a2a359c6-985b-4a07-afc7-34dcb1a61793
+md"### Climb 4: Balked Landing Climb AEO 
+
+For balked landing, assume the weight of the aircraft is equal to the estimated weight at landing???"
+
+# ╔═╡ 3266f676-2f1d-487f-bd26-820d528ba1db
+begin	
+	k_s_balked_AEO  = 1.3
+	G_balked_AEO    = 0.025
+	ΔCD0_balked_AEO = ΔCD0_10deg_down # Flaps 10 deg, gear down
+	k_balked_AEO    = induced_drag_coefficient(e_10deg, AR)
+	WF_balked_AEO   = LandingFF # Maximum landing weight fraction
+
+	TbW_baulked_AEO = thrust_corrected_climb(k_s_balked_AEO, CD_min + ΔCD0_balked_AEO, CL_max_climb, k_balked_AEO, G_balked_AEO, n_eng, WF_balked_AEO)
+	
+	baulked_AEO_climb = fill(TbW_baulked_AEO, length(wing_loadings))
+end;
+
+# ╔═╡ de297d91-384e-4f30-89e9-b4b6723c4dfb
+md"### Climb 5: Balked Landing Climb OEI "
+
+# ╔═╡ 6029fa7b-90b7-4d0e-be6e-a97fb0b3ffdb
+begin	
+	k_s_balked_OEI = 1.5
+	G_balked_OEI = 0.014
+	ΔCD0_balked_OEI = ΔCD0_10deg_down # Flaps 10 deg, gear down
+	k_balked_OEI = induced_drag_coefficient(e_10deg, AR)
+	WF_balked_OEI = LandingFF # Maximum landing weight fraction
+
+	TbW_baulked_OEI = thrust_corrected_climb(k_s_balked_OEI, CD_min + ΔCD0_balked_OEI, CL_max_climb, k_balked_OEI, G_balked_OEI, n_eng, WF_balked_OEI, OEI = true)
+	
+	baulked_OEI_climb = fill(TbW_baulked_OEI, length(wing_loadings))
+end;
+
+# ╔═╡ 6e113695-c07b-4acc-9d42-b046c985ed13
+begin
+	plot(ylabel = "(T/W)", xlabel = "(W/S), N/m²", 
+		 			title = "Matching Chart")
+	plot!(stalls, TbWs, label = "Stall")
+	plot!(wing_loadings, TbW_takeoff, label = "Takeoff")
+	plot!(wbs_landing, TbWs, label = "Landing")
+	plot!(wing_loadings, takeoff_climbs, label = "Climb 1")
+	plot!(wing_loadings, trans_climb, label = "Climb 2")
+	plot!(wing_loadings, enroute_climb, label = "Climb 3")
+	plot!(wing_loadings, baulked_AEO_climb, label = "Climb 4")
+	plot!(wing_loadings, baulked_OEI_climb, label = "Climb 5")
+	annotate!(2000, 0.45, "Feasible")
+end
+
+# ╔═╡ 247c31bd-b667-4f45-aa32-6a6e11b22df9
+md"""### Cruise
+
+The thrust lapse of the engine with altitude is:
+
+```math
+T_\text{cruise} \approx \sigma^{0.6}_\text{cruise} T_0, \quad \sigma_\text{cruise} = 0.2846
+```
+
+Hence, evaluating the cruise ratios at the takeoff condition:
+
+```math
+\begin{align}
+	\left(\frac{T}{W}\right)_\text{cruise} & = \frac{q C_{D_0}}{(W/S)} + \frac{K}{q}(W/S) \\
+\implies \left(\frac{T_0}{W_0}\right)_\text{cruise} & = \frac{1}{\sigma^{0.6}_\text{cruise}}\left(\frac{W_\text{cruise}}{W_0}\right)\left(\frac{T}{W}\right)_\text{cruise}
+\end{align}
+```
+"""
+
+# ╔═╡ 68a25b30-dede-420b-9145-ca34e26b0eb4
+cruise_condition(wing_loading, q, CD0, k) = q * CD0 / wing_loading + k / q * wing_loading
+
+# ╔═╡ 94611365-5f48-4b01-9b02-c77873560765
+md"""###
+
+ ```math
+\frac{W_\text{cruise}}{W_0} = \frac{W_\text{cr}}{W_\text{cr-1}} \frac{W_\text{cr-1}}{W_\text{cr-2}}...\frac{W_1}{W_\text{0}}
+```
+
+"""
+
+# ╔═╡ 7ca7b1c0-6408-46b4-aaf5-7f441469ae4d
+md"
+Assume $W_\text{cruise}/{W_0} \approx 0.92$."
+
+# ╔═╡ eb64a73a-20ef-4682-9341-0a235aa6e876
+begin
+	σ_cruise = 0.2846
+end
+
+# ╔═╡ 085bc474-bf43-4fdc-9e6f-bb8612df81ab
+q = dynamic_pressure(σ_cruise * 1.225, M * c1)
+
+# ╔═╡ d1f6ed81-d512-4e39-827c-3e1b9148908f
+k_cruise = induced_drag_coefficient(e_0deg, AR)
+
+# ╔═╡ 4842da08-bcd8-4737-bca7-cc937bc02acf
+tbw_cruise = 1/σ_cruise^0.6 * cruiseFF1 * cruise_condition.(wing_loadings, q, CD0, k_cruise);
+
+# ╔═╡ b1c6ed5c-bb37-4178-8cfb-d5c36a41c90c
+md"### Constrained Optimization"
+
+# ╔═╡ 8bb9cc59-9f51-4c8d-ba70-f338a73217c3
+begin
+	plot(
+		xlabel = "(W/S), N/m²", 
+		ylabel = "(T/W)", 
+		title = "Matching Chart",
+		legend = :bottomright
+	)
+	# Lines
+	plot!(stalls, TbWs, label = "Stall")
+	plot!(wing_loadings, TbW_takeoff, label = "Takeoff")
+	plot!(wbs_landing, TbWs, label = "Landing")
+	plot!(wing_loadings, takeoff_climbs, label = "Takeoff Climb")
+	plot!(wing_loadings, trans_climb, label = "Transition Climb OEI")
+	plot!(wing_loadings, enroute_climb, label = "Enroute Climb OEI")
+	plot!(wing_loadings, baulked_AEO_climb, label = "Baulked Landing Climb AEO")
+	plot!(wing_loadings, baulked_OEI_climb, label = "Baulked Landing Climb OEI")
+	plot!(wing_loadings, tbw_cruise, label = "Cruise")
+
+	# Annotation
+	annotate!(4000, 0.35, "Feasible")
+
+	# Points
+	scatter!([6480], [TbW_takeoff_climb], label = "Constrained Optimum 1 (Min Thrust)") # Plot min thrust point evaluated graphically
+	scatter!([WbS_stall], [0.271], label = "Constrained Optimum 2 (Max Wing Loading)")
+	 # Plot max wing loading point evaluated graphically
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -864,7 +1136,7 @@ PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.3"
+julia_version = "1.10.0"
 manifest_format = "2.0"
 project_hash = "bc90aea6404ad45f343e688683a422edefefecf5"
 
@@ -1043,7 +1315,7 @@ weakdeps = ["Dates", "LinearAlgebra"]
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.0.5+0"
+version = "1.0.5+1"
 
 [[deps.ComponentArrays]]
 deps = ["ArrayInterface", "ChainRulesCore", "ForwardDiff", "Functors", "LinearAlgebra", "Requires", "StaticArrayInterface"]
@@ -1478,21 +1750,26 @@ version = "0.16.1"
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
 uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
-version = "0.6.3"
+version = "0.6.4"
 
 [[deps.LibCURL_jll]]
 deps = ["Artifacts", "LibSSH2_jll", "Libdl", "MbedTLS_jll", "Zlib_jll", "nghttp2_jll"]
 uuid = "deac9b47-8bc7-5906-a0fe-35ac56dc84c0"
-version = "7.84.0+0"
+version = "8.4.0+0"
 
 [[deps.LibGit2]]
-deps = ["Base64", "NetworkOptions", "Printf", "SHA"]
+deps = ["Base64", "LibGit2_jll", "NetworkOptions", "Printf", "SHA"]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
+
+[[deps.LibGit2_jll]]
+deps = ["Artifacts", "LibSSH2_jll", "Libdl", "MbedTLS_jll"]
+uuid = "e37daf67-58a4-590a-8e99-b0245dd2ffc5"
+version = "1.6.4+0"
 
 [[deps.LibSSH2_jll]]
 deps = ["Artifacts", "Libdl", "MbedTLS_jll"]
 uuid = "29816b5a-b9ab-546f-933c-edad1886dfa8"
-version = "1.10.2+0"
+version = "1.11.0+1"
 
 [[deps.Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
@@ -1598,7 +1875,7 @@ version = "1.1.9"
 [[deps.MbedTLS_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
-version = "2.28.2+0"
+version = "2.28.2+1"
 
 [[deps.Measures]]
 git-tree-sha1 = "c13304c81eec1ed3af7fc20e75fb6b26092a1102"
@@ -1616,7 +1893,7 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
-version = "2022.10.11"
+version = "2023.1.10"
 
 [[deps.NaNMath]]
 deps = ["OpenLibm_jll"]
@@ -1643,12 +1920,12 @@ version = "1.3.5+1"
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
-version = "0.3.21+4"
+version = "0.3.23+2"
 
 [[deps.OpenLibm_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
-version = "0.8.1+0"
+version = "0.8.1+2"
 
 [[deps.OpenSSL]]
 deps = ["BitFlags", "Dates", "MozillaCACerts_jll", "OpenSSL_jll", "Sockets"]
@@ -1682,7 +1959,7 @@ version = "1.6.3"
 [[deps.PCRE2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
-version = "10.42.0+0"
+version = "10.42.0+1"
 
 [[deps.Parsers]]
 deps = ["Dates", "PrecompileTools", "UUIDs"]
@@ -1704,7 +1981,7 @@ version = "0.42.2+0"
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-version = "1.9.2"
+version = "1.10.0"
 
 [[deps.PlotThemes]]
 deps = ["PlotUtils", "Statistics"]
@@ -1807,7 +2084,7 @@ deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 
 [[deps.Random]]
-deps = ["SHA", "Serialization"]
+deps = ["SHA"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[deps.Ratios]]
@@ -1949,6 +2226,7 @@ version = "1.2.0"
 [[deps.SparseArrays]]
 deps = ["Libdl", "LinearAlgebra", "Random", "Serialization", "SuiteSparse_jll"]
 uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+version = "1.10.0"
 
 [[deps.SpecialFunctions]]
 deps = ["IrrationalConstants", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
@@ -2001,7 +2279,7 @@ version = "1.4.2"
 [[deps.Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
-version = "1.9.0"
+version = "1.10.0"
 
 [[deps.StatsAPI]]
 deps = ["LinearAlgebra"]
@@ -2032,9 +2310,9 @@ deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays"]
 uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 
 [[deps.SuiteSparse_jll]]
-deps = ["Artifacts", "Libdl", "Pkg", "libblastrampoline_jll"]
+deps = ["Artifacts", "Libdl", "libblastrampoline_jll"]
 uuid = "bea87d4a-7f5b-5778-9afe-8cc45184846c"
-version = "5.10.1+6"
+version = "7.2.1+1"
 
 [[deps.SymbolicIndexingInterface]]
 deps = ["DocStringExtensions"]
@@ -2323,7 +2601,7 @@ version = "1.5.0+0"
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
 uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
-version = "1.2.13+0"
+version = "1.2.13+1"
 
 [[deps.Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -2364,7 +2642,7 @@ version = "0.15.1+0"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.8.0+0"
+version = "5.8.0+1"
 
 [[deps.libevdev_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -2405,12 +2683,12 @@ version = "1.1.6+0"
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850ede-7688-5339-a07c-302acd2aaf8d"
-version = "1.48.0+0"
+version = "1.52.0+1"
 
 [[deps.p7zip_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
-version = "17.4.0+0"
+version = "17.4.0+2"
 
 [[deps.x264_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -2432,57 +2710,70 @@ version = "1.4.1+1"
 """
 
 # ╔═╡ Cell order:
-# ╠═6d8c9410-d555-11ee-31bd-a9ca7fdf7857
+# ╟─6d8c9410-d555-11ee-31bd-a9ca7fdf7857
 # ╠═065fbab5-6f9c-49e7-8a23-99bacd5da413
 # ╠═848078d6-01dc-4490-ada6-80d59b09e0ed
-# ╠═5374c011-242b-4fa4-a023-ff96b1c05fc6
-# ╠═439ef922-0248-401d-928d-dd2545f0b972
-# ╠═873c5b1c-1f29-4640-a870-7557703b759a
+# ╟─5374c011-242b-4fa4-a023-ff96b1c05fc6
+# ╟─439ef922-0248-401d-928d-dd2545f0b972
+# ╟─873c5b1c-1f29-4640-a870-7557703b759a
 # ╠═69ae798d-fe27-4f30-8419-bf864258353c
 # ╠═7370adf7-69af-4ade-b63b-d6eff287834a
 # ╠═4ae5727a-0002-4ec8-9a0b-00035b73ac7f
 # ╠═4925458c-1ec5-4dbb-9ed1-321214396d8f
 # ╟─ed43e6b5-7113-4c81-bc04-c04f5cf3ae40
-# ╟─6927ddfd-3007-4a5a-8e7a-01b21ff8180e
-# ╟─1e34b422-b889-4dd6-89c6-7496fafc46fc
+# ╠═6927ddfd-3007-4a5a-8e7a-01b21ff8180e
+# ╠═1e34b422-b889-4dd6-89c6-7496fafc46fc
 # ╟─cf5c0521-cf43-42ab-8ac2-728559216e7b
 # ╠═16dd553a-3e71-41df-b5e8-c6cab9a63f17
 # ╠═8ffec899-a8f5-4255-901e-ae60bf52ab25
 # ╠═e88b5067-b4e1-4dea-9c70-7e2d5f8f05e8
-# ╠═a92053bd-3057-4eac-9913-b053e35e1f18
-# ╟─836289a7-a6ae-48e9-90b2-eb30c3d865f0
-# ╠═eec3569b-d858-4549-a4a9-9176e8a62989
-# ╠═8672a6f2-415c-4605-b7c5-7420c47da4a5
-# ╠═a26c2944-b6f0-41b2-8375-c9df91370234
+# ╠═f8420532-af8b-427f-ab69-1f4309962f2f
 # ╠═11631c94-6c25-435f-a640-365218cc7abc
+# ╠═a92053bd-3057-4eac-9913-b053e35e1f18
+# ╠═35e141dc-b022-4ebe-82c8-8e17e387770a
+# ╠═0d2e6de7-1882-4240-bdc0-16f8816f4c59
+# ╠═cafbaddb-ed2c-487f-b18b-7cb85e5aeeb4
+# ╠═2826481d-c419-4645-9f92-739ef73870a6
+# ╠═836289a7-a6ae-48e9-90b2-eb30c3d865f0
+# ╠═eec3569b-d858-4549-a4a9-9176e8a62989
+# ╠═7013e84b-041b-4bce-a885-c571be085e5b
+# ╠═7d4b3405-dda0-4039-8376-3640cfc600cd
 # ╠═1696eb91-1317-49d2-8762-22092bb3f429
 # ╠═523094f1-8534-4e7a-8f65-034291332647
 # ╠═b00fb477-0a26-44ed-a8f9-c8504a454845
+# ╠═c44a6d2a-1eb0-4da9-a7cb-e83c3662da85
 # ╠═030faac0-b5af-424a-b422-fdf7e3fa9567
 # ╟─b979ddb9-ca6b-4ee2-942c-661eec458189
 # ╠═63aa90d8-ef35-41b5-9f39-1fdfe5d8eb9a
 # ╟─4b4d0281-5ef2-46c0-b711-fdab27e95375
-# ╠═26f8c221-f9be-4a80-895c-2c04fe74e12b
-# ╠═3bb0b409-9b52-4f30-9217-734e54989e8d
-# ╠═b6c97d72-9bc5-4065-8233-9efa6ac8d5ce
-# ╠═f8656f65-afc2-4700-9976-188213d1428b
-# ╠═cee7c39f-3c6d-467d-839e-0379b64251d5
+# ╟─26f8c221-f9be-4a80-895c-2c04fe74e12b
 # ╠═06a3b160-88ff-4e6e-a633-36f7bae15a72
+# ╠═acc0a6b8-a8b7-4a7f-bec7-3d7c5b0eb41e
+# ╠═4a02a0dc-e8c1-4e5a-8184-14c79c9b220f
+# ╠═8215cc76-9a68-42a7-86aa-44bfe0e5c030
+# ╠═f6f00355-a1c4-47f6-a4da-e1d0cf075a7b
+# ╟─43e0a31a-0864-4a9c-858f-561d2e5e0ec6
 # ╠═960c6d25-0a82-4368-9d34-54cb8624c6d0
-# ╠═17e18aa0-29fe-46e9-9a6f-85188a818695
-# ╟─6e2b5ba0-e4e6-4af2-ae96-48f2f86e6f6b
-# ╟─29c77775-f591-4cbc-8373-7eb08976168a
-# ╟─49ebf579-ff75-4b83-86f1-aa46ce738597
+# ╠═5494bd3a-9265-4bd5-959b-373518271d13
+# ╠═f2784112-a190-477c-a016-b79943a7837f
+# ╠═21a2c7f2-cf3b-4cf4-8ae9-76e9b2f9e3f9
+# ╠═1e8d75aa-35b1-4385-8441-af85185a840f
+# ╠═ee999a0e-8cb1-49f8-b1c8-f03013c716c8
+# ╠═0cea009b-228c-432c-858e-142fd088a7f5
+# ╟─c256c481-f142-4a23-8382-f9aff0c8d6aa
+# ╠═ff0ebbd1-1cef-413f-a1c8-1926f2d9d82d
+# ╠═b0f149fe-5efe-40bf-9555-ff654fa31fbc
+# ╠═49ebf579-ff75-4b83-86f1-aa46ce738597
 # ╟─2addc67b-df44-4f9c-a02b-ab48444db914
 # ╟─ab5bd95d-b853-4f8b-a4ed-9529cf461761
 # ╟─916578b7-844a-48ea-919f-5ac1063bfaf7
-# ╟─000dd8c3-af7f-4a02-b378-2dd1c32deadc
+# ╠═000dd8c3-af7f-4a02-b378-2dd1c32deadc
 # ╟─f07aba16-01db-4d2d-81a6-0ce39e6bc598
 # ╟─10de6318-abec-49cf-a57a-2fc016ce7829
 # ╟─e2fe770b-e4a2-42ef-bc45-24f4d48b6332
 # ╟─6ffb8005-55f0-4378-90aa-08fd63c94ef4
 # ╟─43fbfc6a-ecaa-4361-b014-cadeab4bc5da
-# ╟─0c05bd61-968b-4dc6-86ce-9688b5b30cef
+# ╠═0c05bd61-968b-4dc6-86ce-9688b5b30cef
 # ╠═01f5a68d-81af-49c5-8528-080ad028abe9
 # ╠═673b3a13-557d-4291-a106-50dd19596999
 # ╠═e001fec6-265f-4f5d-ad14-7a69b5fd26c8
@@ -2492,25 +2783,9 @@ version = "1.4.1+1"
 # ╠═d180eebc-ad70-47f7-b2a6-8dce912c63c0
 # ╠═0d4758d7-6b80-4da9-bfbf-869e2e695a69
 # ╠═e29eede5-d573-4a17-b77e-1ebdc1a0f43b
-# ╠═a717ac86-85b0-46b4-87d1-8cc46df43858
-# ╠═37ce28ef-f628-4a97-a81b-4834a8e18884
-# ╠═991c242b-5668-4071-bdb2-0469c81cbe0b
-# ╠═24032cff-7150-43f4-80d5-6f534cc8d461
-# ╠═e1f6717b-5006-4539-9935-dca8358c03a1
-# ╠═c09c587f-aba5-472e-a476-33e16ed94c9c
-# ╠═5b685898-dbba-439a-b07f-f703491ad986
-# ╠═fab99f96-2d8c-465d-90c2-f2f9773920cd
-# ╠═4e73edc6-ac5f-43cc-a094-f35925ed64d2
-# ╠═33a11564-5b1b-4376-ad64-7cc0ab2deb50
-# ╠═2a20fc7a-95c0-478b-bc16-57221f68872e
-# ╠═c54839c8-963d-45b1-a188-aaedb77fdab1
-# ╠═83fe2f1c-2071-4890-9646-3140c6a95ec0
-# ╠═2eff6e0d-c8a8-4bb8-9fd5-0072e211068f
-# ╠═9205acb8-4951-4b6f-b167-a1b4db38c620
-# ╠═dc933fe1-c849-4694-bda3-b66623183bea
-# ╠═87c771d5-fde7-4863-a43d-a33fb5a05d2f
+# ╟─87c771d5-fde7-4863-a43d-a33fb5a05d2f
 # ╠═63dcc3ab-2fe8-4de7-98bd-bcf9f15a71bb
-# ╠═3f15b08b-964e-48ce-ba8e-62315801405b
+# ╟─3f15b08b-964e-48ce-ba8e-62315801405b
 # ╟─8a008a5d-2463-4c19-8c1f-0955cb204b7b
 # ╠═11ede02c-9da3-4728-9457-db2c2126f850
 # ╠═0b7fc8d2-3939-4d20-8ce1-542a2fc3bc02
@@ -2521,6 +2796,7 @@ version = "1.4.1+1"
 # ╠═130fff97-61e9-4192-9fc7-011cdc9d4c73
 # ╠═053e352f-5eaf-42d2-b9cb-f6749e36ce8f
 # ╠═5c7ea184-20cf-419f-93f8-6250d9a419e5
+# ╠═c5c195c5-bd70-47aa-ba48-2e838e288007
 # ╠═9e7308b3-7d80-4189-a21a-0667f7b828e5
 # ╠═d82744d2-1481-4ffa-8417-44ad6eb6be64
 # ╠═bb4a10bc-40c2-4efd-904e-72ff4749ddab
@@ -2534,17 +2810,46 @@ version = "1.4.1+1"
 # ╠═c8ff8fe0-2124-483e-b689-446bedd2afbf
 # ╠═4f86c8b6-9fcf-42e9-9232-36eca90b6489
 # ╠═06398c2e-f193-4257-ad3f-d7f51c9c350b
+# ╟─e6577e5d-5891-4698-b97b-3e71e95a17dc
 # ╠═ae92fd2f-cf70-477f-9da9-861ae7ef6bad
 # ╠═f249f1a0-f11c-446b-b91e-a63a55df45ef
 # ╠═4bb61ea6-1b71-4d94-bdd2-58b8c016f171
 # ╠═d415634d-1ea9-435a-8de5-4b7a2350cd17
-# ╠═d6f94de5-1457-426f-875a-35f8031bfafc
+# ╟─d6f94de5-1457-426f-875a-35f8031bfafc
 # ╟─8c14d493-f5ef-4f82-9970-8369acf181a7
 # ╠═4ad77bb4-ea2c-4f2d-86a7-badb5b9fac9c
 # ╠═a8b1c93c-30f6-4587-a5e3-6a5d73aee85d
-# ╟─bee5fe62-691b-4a84-9aae-a4c90260af96
+# ╠═bee5fe62-691b-4a84-9aae-a4c90260af96
 # ╟─21cf6e63-16e7-4d8c-8f0f-6db068b600ed
 # ╠═ef4c561e-89c4-42e2-a169-f30a5bbe0871
-# ╠═b4323785-5a16-41ed-954b-effbec5002b9
+# ╟─b4323785-5a16-41ed-954b-effbec5002b9
+# ╠═03caea26-ae46-4eef-9123-c0d8999dd2c0
+# ╠═d1def77c-8a51-40b5-bdb4-f64fcaefe71d
+# ╠═82a8f4fd-95e7-45f2-9c67-f5438ad40ed9
+# ╟─7faabb3e-c7c6-4234-8dbc-d3836d91db8e
+# ╟─d72c0a85-12f2-4156-ac1b-b4446de0a917
+# ╟─c1414a3b-7a13-4d24-8a05-6a92cbf96c05
+# ╠═90ae6c9b-3ed7-40a9-b184-a29cd8637937
+# ╟─f07cca3c-c158-40dd-be46-00eae0eb47b8
+# ╠═9d5d2fce-cbd2-451b-b9c4-5640e82c4093
+# ╟─5c211fa6-13ec-4d19-bdd3-48582cf16560
+# ╠═03ab500d-5825-473d-8fed-edc87600632c
+# ╟─7c6a892f-5cac-4653-800c-7e7b9a6bbb1c
+# ╠═361dc8e5-03da-40ef-b0d0-d99e7540d865
+# ╟─a2a359c6-985b-4a07-afc7-34dcb1a61793
+# ╠═3266f676-2f1d-487f-bd26-820d528ba1db
+# ╟─de297d91-384e-4f30-89e9-b4b6723c4dfb
+# ╠═6029fa7b-90b7-4d0e-be6e-a97fb0b3ffdb
+# ╟─6e113695-c07b-4acc-9d42-b046c985ed13
+# ╟─247c31bd-b667-4f45-aa32-6a6e11b22df9
+# ╠═68a25b30-dede-420b-9145-ca34e26b0eb4
+# ╟─94611365-5f48-4b01-9b02-c77873560765
+# ╟─7ca7b1c0-6408-46b4-aaf5-7f441469ae4d
+# ╠═eb64a73a-20ef-4682-9341-0a235aa6e876
+# ╠═085bc474-bf43-4fdc-9e6f-bb8612df81ab
+# ╠═d1f6ed81-d512-4e39-827c-3e1b9148908f
+# ╠═4842da08-bcd8-4737-bca7-cc937bc02acf
+# ╠═b1c6ed5c-bb37-4178-8cfb-d5c36a41c90c
+# ╠═8bb9cc59-9f51-4c8d-ba70-f338a73217c3
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
