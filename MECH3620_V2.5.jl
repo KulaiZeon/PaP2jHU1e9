@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.38
+# v0.19.40
 
 using Markdown
 using InteractiveUtils
@@ -100,7 +100,7 @@ After analysing the performance and the specification of the existing aircraft a
 | Maximum Takeoff Weight(MTOW) | $6291~kg$ | 
 | Capacity | $8~passenger+1~crew~or~7~passengers+2~crew$ |
 | Cruise Speed | $416~kts$ |
-| Cruise Altitude | $45000~ft$ |
+| Cruise Altitude | $40000~ft$ |
 | Maximum Payload | $968~kg~including~500kg~baggage~capacity$ | 
 | Engine | $Williams~FJ44-3A$ |
 | Thrust | $2820~lbf$ |
@@ -120,11 +120,11 @@ md"### Constants "
 begin
 	g = 9.81
 	gamma = 1.4
-	R = 273 #Specific gas constant
-	Wcrew = (1*90)*g #Weight (N) for 2 Crew
+	R = 287 #Specific gas constant
+	Wcrew = (1*90)*g #Weight (N) for 1 Crew
 	Wpl = (90*7+450)*g # From requirement, Payload must not be less than 900KG WITH 450KG Baggage
 	LD_max = 12; 					# Lift to Drag Ratio (assume)  			
-	M = 0.81
+	M = 0.80
 	Hc = 40000*0.3048 	;			#Cruise Altitude(m)	
 end;
 
@@ -220,7 +220,7 @@ md"""
 # ╔═╡ cafbaddb-ed2c-487f-b18b-7cb85e5aeeb4
 begin
 	c1 = 294.9; # (m/s) Speed of sound   
-	SFC_cruise = 0.75/3600
+	SFC_cruise = 0.65/3600
 	V1 = M*c1 #Cruise Mach Number
 	R1 = 2016*1852 # (m)   Cruising Range 
 	LD_cruise = 0.866 * LD_max; # Cruise Lift to Drag ratio (0.866 comfirmed byTA)
@@ -457,7 +457,7 @@ println("The expected MTOW is: ",MTOW_kg)
 
 # ╔═╡ 49ebf579-ff75-4b83-86f1-aa46ce738597
 md"""
-# Preliminary Sizing ###NOT YET CORRECTED
+# Preliminary Sizing
 """
 
 # ╔═╡ 2addc67b-df44-4f9c-a02b-ab48444db914
@@ -780,11 +780,11 @@ takeoff_condition(WbS, σ, CL_takeoff, TOP) = (0.0929/4.448) * WbS / (TOP * σ *
 # ╔═╡ f249f1a0-f11c-446b-b91e-a63a55df45ef
 begin
 	CL_takeoff = 1.8
-	TOP = 185 # should be 185 according to lec
+	TOP = 280 # should be 185 according to lec
 end
 
 # ╔═╡ 4bb61ea6-1b71-4d94-bdd2-58b8c016f171
-wing_loadings = 1000:10000;
+wing_loadings = 0:10000;
 
 # ╔═╡ d415634d-1ea9-435a-8de5-4b7a2350cd17
 TbW_takeoff = takeoff_condition.(wing_loadings, σ, CL_takeoff, TOP)
@@ -927,7 +927,7 @@ Flaps at $10^\circ$, gear up | $0.03 | $0.75 |
 begin
 	# Flaps at 0 deg (Cruise)
 	e_0deg  = 0.85
-	ΔCD0_0deg_up = 0. # Clean
+	ΔCD0_0deg_up = 0 # Clean
 
 	# Flaps at 5 deg (Take-off)
 	e_5deg  = 0.8
@@ -1040,7 +1040,7 @@ begin
 	annotate!(2000, 0.45, "Feasible")
 end
 
-# ╔═╡ 247c31bd-b667-4f45-aa32-6a6e11b22df9
+# ╔═╡ b4b72b87-895f-4746-b133-23b919750fc7
 md"""### Cruise
 
 The thrust lapse of the engine with altitude is:
@@ -1057,13 +1057,7 @@ Hence, evaluating the cruise ratios at the takeoff condition:
 \implies \left(\frac{T_0}{W_0}\right)_\text{cruise} & = \frac{1}{\sigma^{0.6}_\text{cruise}}\left(\frac{W_\text{cruise}}{W_0}\right)\left(\frac{T}{W}\right)_\text{cruise}
 \end{align}
 ```
-"""
-
-# ╔═╡ 68a25b30-dede-420b-9145-ca34e26b0eb4
-cruise_condition(wing_loading, q, CD0, k) = q * CD0 / wing_loading + k / q * wing_loading
-
-# ╔═╡ 94611365-5f48-4b01-9b02-c77873560765
-md"""###
+The cruise weight fraction is calculated as follow:
 
  ```math
 \frac{W_\text{cruise}}{W_0} = \frac{W_\text{cr}}{W_\text{cr-1}} \frac{W_\text{cr-1}}{W_\text{cr-2}}...\frac{W_1}{W_\text{0}}
@@ -1071,17 +1065,20 @@ md"""###
 
 """
 
+# ╔═╡ 68a25b30-dede-420b-9145-ca34e26b0eb4
+cruise_condition(wing_loading, q, CD0, k) = q * CD0 / wing_loading + k / q * wing_loading
+
 # ╔═╡ 7ca7b1c0-6408-46b4-aaf5-7f441469ae4d
 md"
 Assume $W_\text{cruise}/{W_0} \approx 0.92$."
 
 # ╔═╡ eb64a73a-20ef-4682-9341-0a235aa6e876
 begin
-	σ_cruise = 0.2846
+	σ_cruise = 0.338
 end
 
 # ╔═╡ 085bc474-bf43-4fdc-9e6f-bb8612df81ab
-q = dynamic_pressure(σ_cruise * 1.225, M * c1)
+q = dynamic_pressure(σ_cruise*1.225, M * (1.4*287*(273-49.9))^(1/2))
 
 # ╔═╡ d1f6ed81-d512-4e39-827c-3e1b9148908f
 k_cruise = induced_drag_coefficient(e_0deg, AR)
@@ -1089,8 +1086,8 @@ k_cruise = induced_drag_coefficient(e_0deg, AR)
 # ╔═╡ 4842da08-bcd8-4737-bca7-cc937bc02acf
 tbw_cruise = 1/σ_cruise^0.6 * cruiseFF1 * cruise_condition.(wing_loadings, q, CD0, k_cruise);
 
-# ╔═╡ b1c6ed5c-bb37-4178-8cfb-d5c36a41c90c
-md"### Constrained Optimization"
+# ╔═╡ 1c71bd50-2a4b-4162-87c2-253cced5e171
+md"""### Constrained Optimization"""
 
 # ╔═╡ 8bb9cc59-9f51-4c8d-ba70-f338a73217c3
 begin
@@ -1099,6 +1096,7 @@ begin
 		ylabel = "(T/W)", 
 		title = "Matching Chart",
 		legend = :bottomright
+		
 	)
 	# Lines
 	plot!(stalls, TbWs, label = "Stall")
@@ -1111,14 +1109,269 @@ begin
 	plot!(wing_loadings, baulked_OEI_climb, label = "Baulked Landing Climb OEI")
 	plot!(wing_loadings, tbw_cruise, label = "Cruise")
 
+	ylims!(0,0.6)
 	# Annotation
-	annotate!(4000, 0.35, "Feasible")
+	annotate!(1750, 0.40, "Feasible")
 
+	
+	
 	# Points
 	scatter!([6480], [TbW_takeoff_climb], label = "Constrained Optimum 1 (Min Thrust)") # Plot min thrust point evaluated graphically
 	scatter!([WbS_stall], [0.271], label = "Constrained Optimum 2 (Max Wing Loading)")
 	 # Plot max wing loading point evaluated graphically
 end
+
+# ╔═╡ fe005ceb-06fa-4219-a84f-1f7cffa7026b
+md"""
+# Wing Design
+"""
+
+# ╔═╡ 2a8622b3-7585-40df-846b-c02985b9f7ee
+begin
+	# AIRFOIL PROFILES
+	foil_w_r = read_foil(download("http://airfoiltools.com/airfoil/seligdatfile?airfoil=sc20414-il")) # Root (NASA SC(2)-0414 AIRFOIL (sc20414-il))
+	foil_w_t = read_foil(download("http://airfoiltools.com/airfoil/seligdatfile?airfoil=rae5214-il")) # Tip (RAE 5214 AIRFOIL (rae5214-il))
+end
+
+# ╔═╡ fc2edcd2-55cb-43e1-82e0-6dddc31d3bf2
+wing = WingSection(
+	root_foil 	= foil_w_r,	    # Root airfoil
+	tip_foil 	= foil_w_t, 	# Tip airfoil
+	dihedral 	= 5., 			# Dihedral angle (deg)
+	root_twist 	= 2., 			# Root twist angle (deg)
+	tip_twist 	= -2., 			# Root twist angle (deg)
+	area 		= 24.82 , 		# Wing area (m^2)
+	aspect 		= 9.68, 		# Aspect ratio
+	
+	sweep 		= 25., 				# Sweep angle (deg)
+	w_sweep 	= 0.25, 			# Sweep angle location (c/4 sweep)
+	taper 		= 0.35, 	        # Taper ratio (暫時冇用)
+	
+	symmetry 	= true, 			# symmetry
+	position 	= [0.,0.,0.] 		# Position
+)
+
+# ╔═╡ 87615ae6-6b9c-456c-b637-852524e89b10
+md" 
+## Geometruc Information
+"
+
+# ╔═╡ f8f53430-aded-4591-81dd-dfd4ccf05ad5
+foils(wing)
+
+# ╔═╡ ff0947bc-c348-4e09-b446-41fa5197e52a
+spans(wing)
+
+# ╔═╡ 08fa9a9d-b4a8-4a81-b73f-7ba522c83689
+dihedrals(wing)
+
+# ╔═╡ 9f905b04-109b-4748-a695-eb3041509030
+sweeps(wing,0.25)
+
+# ╔═╡ be189336-e3c6-419b-9bc9-83787f44eab6
+wing_span  = span(wing) # span length
+
+# ╔═╡ 4c002539-47c0-49af-b910-9c6a889a9b08
+wing_p_area = projected_area(wing) # wing projected area (m²)
+
+# ╔═╡ 28a69c3e-22eb-43dc-a3b0-ce176c004a4f
+wing_chord =  mean_aerodynamic_chord(wing) # Mean aerodynamic chord (m)
+
+# ╔═╡ d5100e60-3630-4f09-91c9-f25bbe02037c
+wing_mac   = mean_aerodynamic_center(wing) # mean aerodynamic centre (m)
+
+# ╔═╡ 1191a53c-2384-4f12-a064-1890464ab242
+# ╠═╡ disabled = true
+#=╠═╡
+begin  
+	wing_span  = span(wing) # span length
+	wing_p_area = projected_area(wing) # wing projected area (m²)
+	wing_chord =  mean_aerodynamic_chord(wing) # Mean aerodynamic chord (m)
+	wing_mac   = mean_aerodynamic_center(wing) # mean aerodynamic centre (m)
+end
+  ╠═╡ =#
+
+# ╔═╡ a2355ca2-5f31-4fd8-a093-82e2b7154485
+md"
+## Visualization
+"
+
+# ╔═╡ 6ab90e24-9a04-4047-b013-663e2a124e2d
+name = "My Wing"
+
+# ╔═╡ 72a0de74-b45f-44d2-a66c-0ac11c7868e4
+begin
+	ϕ_s = @bind ϕ Slider(0:90, default = 30)
+	φ_s = @bind φ Slider(0:90, default = 30)
+
+	ϕ_s, φ_s
+end
+
+# ╔═╡ 5c4f5171-c37b-405a-9c17-52687953f37b
+begin
+	plt = plot(
+		xaxis = "x",yaxis = "y",zaxis = "z",
+		aspect_ratio = 1,
+	    camera = (ϕ,φ),
+		zlim = (-0.5,0.5) .* wing_span
+	)
+    plot!(wing, label = name)
+end
+
+# ╔═╡ 56fadb5b-61f6-4018-b7ab-eaec583a5506
+md"""
+## Aerodynamics Analysis
+"""
+
+# ╔═╡ 099c944a-15a6-46ad-91c6-0e4e9e99ab28
+md"
+### Meshing 
+"
+
+# ╔═╡ c5b24256-0c54-4d51-a3c1-34ad36a14e4e
+wing_mesh = WingMesh(
+	wing, 		# Wing type
+	[20], 		# Number of spanwise panels as a vector (not sure how it affect)
+	12, 		# Number of chordwise panels as an integer
+);
+
+# ╔═╡ 4ef4d2e8-9302-487e-a444-82a2d33145ef
+plot!(plt, wing_mesh,label = name)
+
+# ╔═╡ 6cc274c6-deec-4a72-ae13-baf9431a9e4d
+S_wet = wetted_area(wing_mesh) # wetted area 
+
+# ╔═╡ 0a597123-082d-4047-804f-43708df78331
+S_wet_ratio = wetted_area_ratio(wing_mesh)
+
+# ╔═╡ 60defbbf-2881-495e-b18c-4635235e219b
+C_d_min = 0.0045*S_wet_ratio
+
+# ╔═╡ bc376c98-b93a-4fd1-b258-a47baccc3a56
+md"
+### Vortex Lattice Method
+"
+
+# ╔═╡ 113ca0a7-f750-4984-9443-9dded89753cc
+md"For the analysis, we need to generate a Horseshoe type, corresponding to horseshoe singularity elements used in the vortex lattice method. This is generated as follows:"
+
+# ╔═╡ 8008a6e1-98e3-4542-ae41-04b6de85e43f
+make_horseshoes(wing_mesh) # 要研究吓
+
+# ╔═╡ 94885c7c-57b6-4bb0-a7ab-7b1b93d75d4a
+md"To perform the aerodynamic analysis, you have to assemble these horseshoes for each surface into a ComponentVector."
+
+# ╔═╡ d84c5816-174f-45f8-91b1-3750cf28bc75
+aircraft = ComponentVector(
+	wing = make_horseshoes(wing_mesh) #need to add horizontal and vertical tails later
+)
+
+# ╔═╡ ae4f82d4-b07d-47bf-a10a-1c484a0b8985
+md"freestream condition"
+
+# ╔═╡ 8870c0ea-e5cf-4db9-962b-be2b1877c9f3
+fs = Freestream( 
+	alpha = 5.0, # angle of attack (degree)
+	beta = 0.0,  # sideslip angle (degree)
+	omega = [0.0, 0.0, 0.0] # rotation vector 
+);
+
+
+# ╔═╡ d99f9e35-9342-4118-b7ae-3075feed3c98
+refs = References(
+	speed = 150, # reference speed ()
+	area = wing_p_area,
+	span = wing_span,
+	chord = wing_chord,
+	density = 1.225,
+	location = wing_mac
+);
+
+# ╔═╡ 5b1f86f8-3f98-4b21-ab9f-b29dd12674ca
+system = solve_case(
+	aircraft, fs, refs;
+	compressible = true, # Compressibility option
+	print = false, # Print the results for only the aircraft      
+	print_components = true #Prints the results for all components
+)
+
+# ╔═╡ 3b8009d5-9fb7-4bda-a738-bdb35c79dcb7
+nf = nearfield(system) # the nearfield aerodynamic force and moment Coeff
+
+# ╔═╡ db6690ed-fd6d-43d8-b59c-9b36bd5424a6
+print(nf)
+
+# ╔═╡ 1363a62e-9007-4561-bb8c-77a407895472
+plot!(
+	plt,
+	system, # vortex lattice system
+	wing_mesh, # lifting surface
+	span = 5, # number of steamlines per spanwise section 
+	dist = 10, # distance of steamlines (m)
+)
+
+# ╔═╡ 797d5156-71e8-4f88-9193-1f58510880e0
+md"
+### Drag Polar
+"
+
+# ╔═╡ fbc8c33c-4201-4a4a-a703-89333b981077
+function vary_alpha(aircraft, α, refs)
+	
+	fs = Freestream(alpha = α)
+	
+	system = solve_case(
+		aircraft, fs, refs;
+	    compressible = true, # Compressibility option
+	)
+	return system
+end
+
+# ╔═╡ dc48ef9d-fbb2-4b89-8163-9b4c2171bda9
+begin
+	αs = -10:0.5:10 # range of angle of attack
+    systems = [vary_alpha(aircraft, α, refs) for α in αs ]
+	coeffs = nearfield.(systems)
+    CDis = [c[1] for c in coeffs]
+    CLs = [c[3] for c in coeffs]
+end 
+
+# ╔═╡ 18517801-6084-46ef-8888-a127cd803be4
+plot(CDis, CLs,
+	label = "",
+	xlabel = "C_{D_i}",
+	ylabel = "C_L",
+	title = "Drag Polar",
+	ls = :solid,
+	ylim = (-0.5,1)
+)
+
+# ╔═╡ 0897262d-4b92-419a-96e5-a6e78e8b27da
+md" Not really understand the coding below."
+
+# ╔═╡ b963bef2-ef0a-455f-822d-4f418f00ffad
+# Concatenate results into one array
+data = permutedims(
+    mapreduce(hcat, systems) do sys
+        [sys.freestream.alpha; nearfield(sys) ]
+    end
+)
+
+# ╔═╡ d88f1b5a-279a-4062-a948-a2babaad5ae0
+plot(
+    data[:,1],  # Angle of attack
+    round.(data[:,2:end], digits = 4), # Aerodynamic coefficients
+    layout = (3,2),
+    xlabel = "\alpha",
+    ylabel = ["C_{D_i}" "C_Y" "C_L" "C_\ell" "C_m" "C_n"],
+    labels = "",
+)
+
+# ╔═╡ b2a11276-0b44-45f5-8fb1-39e85dd5ef36
+
+
+# ╔═╡ 4cebcd70-0bc3-4873-934f-1cac02c7b0f4
+
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1136,7 +1389,7 @@ PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.0"
+julia_version = "1.10.2"
 manifest_format = "2.0"
 project_hash = "bc90aea6404ad45f343e688683a422edefefecf5"
 
@@ -1315,7 +1568,7 @@ weakdeps = ["Dates", "LinearAlgebra"]
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.0.5+1"
+version = "1.1.0+0"
 
 [[deps.ComponentArrays]]
 deps = ["ArrayInterface", "ChainRulesCore", "ForwardDiff", "Functors", "LinearAlgebra", "Requires", "StaticArrayInterface"]
@@ -1920,7 +2173,7 @@ version = "1.3.5+1"
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
-version = "0.3.23+2"
+version = "0.3.23+4"
 
 [[deps.OpenLibm_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -2827,7 +3080,7 @@ version = "1.4.1+1"
 # ╠═d1def77c-8a51-40b5-bdb4-f64fcaefe71d
 # ╠═82a8f4fd-95e7-45f2-9c67-f5438ad40ed9
 # ╟─7faabb3e-c7c6-4234-8dbc-d3836d91db8e
-# ╟─d72c0a85-12f2-4156-ac1b-b4446de0a917
+# ╠═d72c0a85-12f2-4156-ac1b-b4446de0a917
 # ╟─c1414a3b-7a13-4d24-8a05-6a92cbf96c05
 # ╠═90ae6c9b-3ed7-40a9-b184-a29cd8637937
 # ╟─f07cca3c-c158-40dd-be46-00eae0eb47b8
@@ -2841,15 +3094,59 @@ version = "1.4.1+1"
 # ╟─de297d91-384e-4f30-89e9-b4b6723c4dfb
 # ╠═6029fa7b-90b7-4d0e-be6e-a97fb0b3ffdb
 # ╟─6e113695-c07b-4acc-9d42-b046c985ed13
-# ╟─247c31bd-b667-4f45-aa32-6a6e11b22df9
+# ╠═b4b72b87-895f-4746-b133-23b919750fc7
 # ╠═68a25b30-dede-420b-9145-ca34e26b0eb4
-# ╟─94611365-5f48-4b01-9b02-c77873560765
 # ╟─7ca7b1c0-6408-46b4-aaf5-7f441469ae4d
 # ╠═eb64a73a-20ef-4682-9341-0a235aa6e876
 # ╠═085bc474-bf43-4fdc-9e6f-bb8612df81ab
 # ╠═d1f6ed81-d512-4e39-827c-3e1b9148908f
 # ╠═4842da08-bcd8-4737-bca7-cc937bc02acf
-# ╠═b1c6ed5c-bb37-4178-8cfb-d5c36a41c90c
+# ╟─1c71bd50-2a4b-4162-87c2-253cced5e171
 # ╠═8bb9cc59-9f51-4c8d-ba70-f338a73217c3
+# ╠═fe005ceb-06fa-4219-a84f-1f7cffa7026b
+# ╠═2a8622b3-7585-40df-846b-c02985b9f7ee
+# ╠═fc2edcd2-55cb-43e1-82e0-6dddc31d3bf2
+# ╠═87615ae6-6b9c-456c-b637-852524e89b10
+# ╠═f8f53430-aded-4591-81dd-dfd4ccf05ad5
+# ╠═ff0947bc-c348-4e09-b446-41fa5197e52a
+# ╠═08fa9a9d-b4a8-4a81-b73f-7ba522c83689
+# ╠═9f905b04-109b-4748-a695-eb3041509030
+# ╠═be189336-e3c6-419b-9bc9-83787f44eab6
+# ╠═4c002539-47c0-49af-b910-9c6a889a9b08
+# ╠═28a69c3e-22eb-43dc-a3b0-ce176c004a4f
+# ╠═d5100e60-3630-4f09-91c9-f25bbe02037c
+# ╟─1191a53c-2384-4f12-a064-1890464ab242
+# ╠═a2355ca2-5f31-4fd8-a093-82e2b7154485
+# ╠═6ab90e24-9a04-4047-b013-663e2a124e2d
+# ╠═72a0de74-b45f-44d2-a66c-0ac11c7868e4
+# ╠═5c4f5171-c37b-405a-9c17-52687953f37b
+# ╠═56fadb5b-61f6-4018-b7ab-eaec583a5506
+# ╠═099c944a-15a6-46ad-91c6-0e4e9e99ab28
+# ╠═c5b24256-0c54-4d51-a3c1-34ad36a14e4e
+# ╠═4ef4d2e8-9302-487e-a444-82a2d33145ef
+# ╠═6cc274c6-deec-4a72-ae13-baf9431a9e4d
+# ╠═0a597123-082d-4047-804f-43708df78331
+# ╠═60defbbf-2881-495e-b18c-4635235e219b
+# ╟─bc376c98-b93a-4fd1-b258-a47baccc3a56
+# ╟─113ca0a7-f750-4984-9443-9dded89753cc
+# ╠═8008a6e1-98e3-4542-ae41-04b6de85e43f
+# ╟─94885c7c-57b6-4bb0-a7ab-7b1b93d75d4a
+# ╠═d84c5816-174f-45f8-91b1-3750cf28bc75
+# ╟─ae4f82d4-b07d-47bf-a10a-1c484a0b8985
+# ╠═8870c0ea-e5cf-4db9-962b-be2b1877c9f3
+# ╠═d99f9e35-9342-4118-b7ae-3075feed3c98
+# ╠═5b1f86f8-3f98-4b21-ab9f-b29dd12674ca
+# ╟─3b8009d5-9fb7-4bda-a738-bdb35c79dcb7
+# ╟─db6690ed-fd6d-43d8-b59c-9b36bd5424a6
+# ╠═1363a62e-9007-4561-bb8c-77a407895472
+# ╟─797d5156-71e8-4f88-9193-1f58510880e0
+# ╠═fbc8c33c-4201-4a4a-a703-89333b981077
+# ╠═dc48ef9d-fbb2-4b89-8163-9b4c2171bda9
+# ╠═18517801-6084-46ef-8888-a127cd803be4
+# ╟─0897262d-4b92-419a-96e5-a6e78e8b27da
+# ╠═b963bef2-ef0a-455f-822d-4f418f00ffad
+# ╟─d88f1b5a-279a-4062-a948-a2babaad5ae0
+# ╠═b2a11276-0b44-45f5-8fb1-39e85dd5ef36
+# ╠═4cebcd70-0bc3-4873-934f-1cac02c7b0f4
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
